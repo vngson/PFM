@@ -1,0 +1,230 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-heading);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-income: var(--income);
+  --color-expense: var(--expense);
+  --shadow-brutal-sm: var(--shadow-brutal-sm);
+  --shadow-brutal: var(--shadow-brutal);
+  --shadow-brutal-lg: var(--shadow-brutal-lg);
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
+  --radius-4xl: 0;
+}
+
+/* Neo-brutalism palette — light theme mặc định. */
+:root {
+  --background: #f5f1e8;       /* ivory */
+  --foreground: #000000;       /* pure black cho text */
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  --primary: #000000;
+  --primary-foreground: #ffffff;
+  --secondary: #f5d547;        /* vibrant yellow */
+  --secondary-foreground: #000000;
+  --muted: #ede7d8;
+  --muted-foreground: #4a4a4a;
+  --accent: #9b7ede;           /* muted violet */
+  --accent-foreground: #ffffff;
+  --destructive: #ff4d4d;      /* hard red */
+  --destructive-foreground: #ffffff;
+  --success: #7fb069;           /* accent green */
+  --success-foreground: #000000;
+  --warning: #f59e0b;
+  --warning-foreground: #000000;
+  --income: #7fb069;
+  --expense: #ff4d4d;
+  --border: #000000;
+  --input: #000000;
+  --ring: #f5d547;
+  --chart-1: #ff4d4d;
+  --chart-2: #f5d547;
+  --chart-3: #9b7ede;
+  --chart-4: #7fb069;
+  --chart-5: #ff8c42;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #000000;
+  --sidebar-primary: #f5d547;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #ede7d8;
+  --sidebar-accent-foreground: #000000;
+  --sidebar-border: #000000;
+  --sidebar-ring: #f5d547;
+  /* Neo-brutalism hard shadow — offset đen tuyệt đối, không blur */
+  --shadow-brutal-sm: 4px 4px 0 0 #000000;
+  --shadow-brutal: 6px 6px 0 0 #000000;
+  --shadow-brutal-lg: 8px 8px 0 0 #000000;
+}
+
+/* Dark theme: invert base nhưng giữ accent + border đậm */
+.dark {
+  --background: #1a1a1a;
+  --foreground: #ffffff;
+  --card: #262626;
+  --card-foreground: #ffffff;
+  --popover: #262626;
+  --popover-foreground: #ffffff;
+  --primary: #f5d547;
+  --primary-foreground: #000000;
+  --secondary: #9b7ede;
+  --secondary-foreground: #ffffff;
+  --muted: #333333;
+  --muted-foreground: #b8b8b8;
+  --accent: #ff8c42;
+  --accent-foreground: #000000;
+  --destructive: #ff4d4d;
+  --destructive-foreground: #ffffff;
+  --success: #7fb069;
+  --success-foreground: #000000;
+  --warning: #f59e0b;
+  --warning-foreground: #000000;
+  --income: #7fb069;
+  --expense: #ff4d4d;
+  --border: #ffffff;
+  --input: #ffffff;
+  --ring: #f5d547;
+  --chart-1: #ff4d4d;
+  --chart-2: #f5d547;
+  --chart-3: #9b7ede;
+  --chart-4: #7fb069;
+  --chart-5: #ff8c42;
+  --sidebar: #262626;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #f5d547;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #333333;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #ffffff;
+  --sidebar-ring: #f5d547;
+  --shadow-brutal-sm: 4px 4px 0 0 #ffffff;
+  --shadow-brutal: 6px 6px 0 0 #ffffff;
+  --shadow-brutal-lg: 8px 8px 0 0 #ffffff;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  /* Phase 19: focus-visible ring đậm hơn cho keyboard user (neo-brutalism style). */
+  :focus-visible {
+    outline: 3px solid var(--ring);
+    outline-offset: 2px;
+  }
+  /* Tone ring xuống cho mouse user (KHÔNG apply focus-visible cho mouse click). */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /* Dotted background pattern nhẹ cho neo-brutalism */
+    background-image: radial-gradient(circle, rgba(0, 0, 0, 0.08) 1px, transparent 1px);
+    background-size: 24px 24px;
+    background-position: 0 0;
+  }
+  .dark body {
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  }
+  html {
+    @apply font-sans;
+  }
+  /* Heading mặc định dùng font-display đậm cứng */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+    letter-spacing: -0.02em;
+  }
+  /* Selection highlight nổi bật */
+  ::selection {
+    background: #f5d547;
+    color: #000000;
+  }
+  /* View Transitions: snap ngắn 120ms linear cho neo-brutalism (mechanical feel).
+     Old trang fade out + translateY -8px. New trang fade in + translateY +8px → 0. */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 90ms;
+    animation-timing-function: linear;
+  }
+  ::view-transition-old(root) {
+    animation-name: snap-out;
+  }
+  ::view-transition-new(root) {
+    animation-name: snap-in;
+  }
+  /* Tôn trọng prefers-reduced-motion: tắt snap, swap tức thì. */
+  @media (prefers-reduced-motion: reduce) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation: none;
+    }
+  }
+
+  /* Shake animation cho form error — neo-brutalism micro-motion */
+  @keyframes brutalShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+  .animate-brutal-shake {
+    animation: brutalShake 0.4s ease-in-out;
+  }
+}
+
+@keyframes snap-out {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-8px); }
+}
+
+@keyframes snap-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
