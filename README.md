@@ -1,36 +1,185 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Personal Finance Manager
 
-## Getting Started
+> Quản lý tài chính cá nhân — multi-currency, multi-locale, neo-brutalism UI.
 
-First, run the development server:
+[![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org)
+[![React](https://img.shields.io/badge/React-19-149eca)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6)](https://www.typescriptlang.org)
+[![Supabase](https://img.shields.io/badge/Supabase-SSR-3ecf8e)](https://supabase.com)
+[![Paraglide](https://img.shields.io/badge/Paraglide-i18n-2bd0bb)](https://inlang.com)
+[![pnpm](https://img.shields.io/badge/pnpm-11-f69220)](https://pnpm.io)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## ✨ Features
+
+- 📊 **Dashboard** — 3 chart streaming (12-month trend, category breakdown, account balances) + stat cards + quick actions
+- 💸 **Transactions** — ghi nhanh qua FAB hoặc full form, filter theo tháng / loại / note, pagination + CSV export
+- 🏦 **Accounts** — nhiều tài khoản, nhiều currency, archive / restore, current_balance tự cập nhật qua trigger
+- 🏷️ **Categories** — icon + color catalog, seed default categories khi signup, soft validation
+- 🎯 **Budgets** — monthly limit per category, progress bar + exceeded state
+- 🔁 **Recurring** — daily / weekly / monthly / yearly rules, calendar view, auto-generate transactions đến hạn
+- 🔍 **Command palette** — search toàn app (Cmd/Ctrl + K)
+- 🌍 **i18n song ngữ** — `vi` (base) + `en`, URL strategy `/en/*`, paraglide v2
+- 🎨 **Neo-brutalism UI** — bold borders + hard shadows + offset transforms
+- 🌓 **Dark mode** — 3-state toggle (light / dark / system) qua `next-themes`
+- 🔐 **Auth** — Supabase email/password, email confirmation, session refresh qua SSR
+- 🛡️ **PDPD-compliant** — soft delete 30 ngày grace period, data export + audit log, consent records
+- 📱 **Responsive** — desktop header + mobile bottom nav + FAB, neo-brutalism giữ trên mọi breakpoint
+
+## 🧱 Tech Stack
+
+| Layer | Choice |
+|---|---|
+| Framework | Next.js 16 (App Router, RSC) |
+| Language | TypeScript 5 (strict) |
+| UI | React 19 + `@base-ui/react` + Tailwind 4 |
+| Database | Supabase (PostgreSQL + Auth + RLS) |
+| ORM/Client | `@supabase/ssr` cho RSC, server actions, route handlers |
+| Charts | Recharts |
+| Forms | React Hook Form + Zod |
+| i18n | Paraglide v2 (`@inlang/paraglide-js`) — URL + globalVariable + cookie + baseLocale strategy |
+| Tests | Vitest |
+| Lint | ESLint + `eslint-config-next` |
+
+## 📦 Project Structure
+
+```
+src/
+├── app/                       # Next.js App Router
+│   ├── [locale]/              # Locale segment (vi | en)
+│   │   ├── (auth)/            # login, signup, check-email, error
+│   │   ├── (protected)/       # dashboard, transactions, accounts, categories, budgets, recurring, settings
+│   │   ├── (public)/          # privacy, terms
+│   │   ├── account-deleted/   # PDPD soft-delete countdown + restore
+│   │   └── auth/callback/     # email confirmation route handler
+│   └── globals.css            # Tailwind + design tokens (neo-brutalism)
+├── components/                # Shared, không gắn feature cụ thể
+│   ├── a11y/ branding/ i18n/ legal/ theme/ ui/
+├── features/                  # Vertical slices — mỗi feature = tên miền
+│   ├── accounts/ auth/ budgets/ categories/ dashboard/
+│   ├── export/ onboarding/ recurring/ search/ settings/ transactions/
+│   └── (mỗi folder: actions.ts, schema.ts, các *.tsx component)
+├── lib/                       # Pure helpers + infra
+│   ├── auth/ env/ export/ hooks/ i18n/ markdown/ supabase/
+│   ├── account-deleted/ countdown.ts
+│   ├── format.ts fx.ts toast.ts utils.ts
+├── paraglide/                 # Generated i18n runtime (DO NOT EDIT)
+│   ├── messages/              # 1 file JS per message
+│   ├── messages.js runtime.js
+└── types/                     # Supabase generated types
+
+messages/                      # Source of truth cho paraglide (en.json + vi.json)
+scripts/                       # paraglide compile + Turbopack runtime patch
+content/                       # Legal markdown (privacy/, terms/) — vi + en
+supabase/
+├── migrations/                # 0001..0005 SQL migrations
+└── seed.sql                   # Demo data (idempotent)
+plans/ docs/                   # Project planning + docs
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Quick Start
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 1. Prerequisites
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Node.js 20+**
+- **pnpm 11+** (`npm i -g pnpm`)
+- **Supabase account** — tạo project tại [supabase.com](https://supabase.com)
 
-## Learn More
+### 2. Install
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+pnpm install
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 3. Configure environment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+cp .env.example .env
+```
 
-## Deploy on Vercel
+Mở `.env` và điền giá trị thật từ Supabase Dashboard → Project Settings → API:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://<your-project>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key>   # chỉ server-side, KHÔNG commit
+NEXT_PUBLIC_SITE_URL=http://localhost:3456     # production: https://your-domain.com
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 4. Apply Supabase migrations + seed
+
+Vào **Supabase Dashboard → SQL Editor**, chạy theo thứ tự:
+
+1. `supabase/migrations/0001_init_schema.sql` — tables + RLS + triggers
+2. `supabase/migrations/0002_seed_default_categories.sql` — helper function
+3. `supabase/migrations/0003_data_export_requests.sql`
+4. `supabase/migrations/0004_soft_delete.sql`
+5. `supabase/migrations/0005_consent_records.sql`
+6. (Optional) `supabase/seed.sql` — demo data với user `demo@example.com` / `DemoPassword123!`
+
+Chi tiết xem [supabase/README.md](./supabase/README.md).
+
+### 5. Run
+
+```bash
+pnpm dev
+```
+
+Mở [http://localhost:3456](http://localhost:3456) → tự redirect về `/vi/login` hoặc `/en/login` theo URL strategy.
+
+## 🧪 Scripts
+
+| Lệnh | Mô tả |
+|---|---|
+| `pnpm dev` | Dev server với hot reload — port `3456` |
+| `pnpm build` | Production build (auto chạy `prebuild` để compile paraglide) |
+| `pnpm start` | Serve production build — port `3456` |
+| `pnpm lint` | ESLint (next/core-web-vitals + typescript) |
+| `pnpm test` | Vitest run (36 tests ở `src/**/*.test.ts`) |
+| `pnpm test:watch` | Vitest watch mode |
+| `pnpm paraglide:compile` | Re-generate `src/paraglide/` từ `messages/*.json` |
+
+> **Tip:** Sau khi sửa message trong `messages/en.json` hoặc `messages/vi.json`, luôn chạy `pnpm paraglide:compile` để regenerate runtime trước khi build/test.
+
+## 🌐 Internationalization
+
+- **Source of truth:** `messages/en.json` + `messages/vi.json` (Paraglide v2 message format)
+- **URL strategy:** `vi` (base) không cần prefix → `/dashboard`; `en` thêm prefix `/en/dashboard`
+- **Strategy:** `['url', 'globalVariable', 'cookie', 'baseLocale']` — defined trong `scripts/paraglide-compile.mjs`
+- **Patch:** `scripts/patch-paraglide-runtime.mjs` đảm bảo runtime state share giữa Turbopack chunks
+
+Thêm locale mới:
+1. Edit `project.inlang/settings.json` — thêm vào `locales`
+2. Tạo `messages/<locale>.json`
+3. `pnpm paraglide:compile`
+
+## 🛡️ PDPD Compliance
+
+App tuân thủ **Nghị định 13/2023/NĐ-CP** (Personal Data Protection Decree):
+
+- ✅ **Consent records** — ghi audit row lúc signup (immutable, service role)
+- ✅ **Soft delete** — user xóa account giữ data 30 ngày, có thể khôi phục qua `/account-deleted`
+- ✅ **Data export** — `/settings` cho phép download toàn bộ data (JSON, schema_versioned, rate limit 1/h)
+- ✅ **IP hash logging** — SHA-256 hash IP cho audit, không lưu raw
+- ✅ **Locale-aware legal docs** — `content/privacy/{vi,en}.md` + `content/terms/{vi,en}.md`
+
+## 🧩 Conventions
+
+- **Vertical slice:** mỗi feature trong `src/features/<name>/` tự chứa `actions.ts`, `schema.ts`, components
+- **Server vs Client:** default là Server Component; thêm `"use client"` chỉ khi cần state / effects / event handlers
+- **Forms:** mọi form validate qua Zod schema ở `features/<name>/schema.ts`, factory nhận `t(translator)` để error messages theo locale
+- **Server Actions:** đặt trong `actions.ts`, return `{ error?, fieldErrors?, success? }` để `useDialogFormState` xử lý
+- **i18n trong code:** chỉ dùng `m.some_key()` từ `@/paraglide/messages` — không hardcode UI text
+- **Không magic numbers:** constants + named config trong module-scope
+- **Comments:** giải thích invariant / hành vi, không gắn plan id / phase number
+
+## 🤝 Contributing
+
+1. Fork + tạo branch (`git checkout -b feat/your-feature`)
+2. Code theo conventions ở trên
+3. Chạy `pnpm lint && pnpm test && pnpm build` trước khi commit
+4. Conventional commits: `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`, `perf:`, `ci:`
+5. Push + mở PR — describe change + test plan + screenshots nếu có UI
+
+## 📄 License
+
+UNLICENSED — private project.
