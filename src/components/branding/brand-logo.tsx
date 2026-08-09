@@ -10,7 +10,7 @@ interface BrandLogoProps {
 
 // Brand mark + chữ "PFM" — dùng ở nav header, auth pages, footer.
 // Neo-brutalism: chữ đậm uppercase, mark có border đen + offset shadow.
-// Phase 25 URL strategy: default href qua buildLocalizedHref để theo locale hiện tại.
+// Default href qua buildLocalizedHref để theo locale hiện tại.
 export function BrandLogo({ href, className }: BrandLogoProps) {
   // Re-eval mỗi render → đồng bộ với locale hiện tại (SSR + client URL strategy).
   const resolvedHref = href ?? buildLocalizedHref('/dashboard', getLocale());

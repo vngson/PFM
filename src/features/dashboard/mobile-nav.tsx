@@ -2,8 +2,8 @@
 
 // MobileNav: bottom navigation cho mobile (< 768px). 4 nav chính +
 // 1 FAB trung tâm cho Quick Add (mở QuickAddForm).
-// Phase 21: dùng để giảm tải header trên mobile, tăng thumb reach.
-// Phase 25 URL strategy: href buildLocalizedHref để URL khớp locale prefix.
+// Giảm tải header trên mobile, tăng thumb reach.
+// Href buildLocalizedHref để URL khớp locale prefix.
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';

@@ -1,8 +1,8 @@
 // Trang quản lý giao dịch định kỳ — Server Component fetch list + accounts + categories.
 // Hiển thị rule, nút "Sinh giao dịch" cho rule đến hạn, form tạo/sửa/xoá.
 // Neo-brutalism: header chip + bordered cards với shadow cứng.
-// Phase 17: thêm ViewTabs (List/Calendar). Calendar fetch occurrences tháng hiện tại.
-// Phase 25: full i18n qua Paraglide messages.
+// ViewTabs (List/Calendar) — Calendar fetch occurrences tháng hiện tại.
+// Full i18n qua Paraglide messages.
 import Link from 'next/link';
 import { Repeat, Zap } from 'lucide-react';
 

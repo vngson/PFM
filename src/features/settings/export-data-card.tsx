@@ -1,7 +1,7 @@
 'use client';
 
 // ExportDataCard: button cho user download toàn bộ data dưới dạng JSON.
-// Phase 23: bổ sung cho Settings page. Hữu ích cho backup + portability.
+// Hữu ích cho backup + portability.
 import { useState, useTransition } from 'react';
 import { Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';

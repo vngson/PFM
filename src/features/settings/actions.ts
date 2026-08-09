@@ -162,9 +162,9 @@ export async function signOutOtherSessions(): Promise<SettingsActionState> {
   return { success: m.settings_signout_other_success() };
 }
 
-// Phase 23: export toàn bộ data của user dưới dạng JSON.
+// Export toàn bộ data của user dưới dạng JSON.
 // Gồm: profile + accounts + categories + transactions + recurring + budgets.
-// Phase 03 (PDPD): thêm schema_version, app_version, byte_size + rate limit 1/h + audit log.
+// schema_version + app_version + byte_size + rate limit 1/h + audit log.
 export type { ExportPayload } from '@/lib/export/payload-builder';
 
 export async function exportAllData(): Promise<ExportPayload | null> {
@@ -215,8 +215,3 @@ export async function exportAllData(): Promise<ExportPayload | null> {
 
   return payload;
 }
-
-// Phase 04 (PDPD): deleteAccount cũ bị thay thế bằng requestAccountDeletion
-// trong auth/account-actions.ts (soft delete + grace period).
-// Giữ stub import-tránh để backward compat với tests nếu có.
-export {};

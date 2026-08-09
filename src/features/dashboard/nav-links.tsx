@@ -2,10 +2,9 @@
 
 // NavLinks: dùng usePathname để highlight link hiện tại.
 // Neo-brutalism: hard border + shadow cho active state.
-// Phase 15.4: chỉ giữ 4 nav chính. Các nav phụ (Danh mục, Định kỳ, Cài đặt)
-// chuyển vào user dropdown menu cho header gọn hơn.
-// Phase 24: labels lấy từ Paraglide messages.
-// Phase 25 URL strategy: href buildLocalizedHref chèn /en prefix khi cần.
+// Chỉ giữ 4 nav chính. Nav phụ (Danh mục, Định kỳ, Cài đặt) chuyển vào user dropdown.
+// Labels lấy từ Paraglide messages.
+// href buildLocalizedHref chèn /en prefix khi cần.
 // `vi` là baseLocale nên href tự nhiên là "/dashboard" (không prefix), `en` thành "/en/dashboard".
 // URL khớp giữa SSR (paraglideMiddleware đọc URL) và client → không hydration mismatch.
 import Link from 'next/link';

@@ -64,7 +64,7 @@ export async function proxy(request: NextRequest) {
       sameSite: 'lax',
     });
 
-    // Phase 04 (PDPD): nếu user đã soft-delete (deleted_at != null),
+    // PDPD: nếu user đã soft-delete (deleted_at != null),
     // redirect tới /account-deleted. Ngoại trừ trang đó + /login + /privacy + /terms.
     const pathname = url.pathname;
     const isAllowedPath =

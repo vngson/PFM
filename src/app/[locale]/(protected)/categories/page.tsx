@@ -1,6 +1,6 @@
 // Trang quản lý danh mục — Server Component fetch data, Client Component render UI.
 // Neo-brutalism: bordered title chip + bold uppercase heading.
-// Phase 25: full i18n qua Paraglide messages.
+// Full i18n qua Paraglide messages.
 import { listCategories } from '@/features/categories/actions';
 import { CategoryForm } from '@/features/categories/category-form';
 import { CategoryList } from '@/features/categories/category-list';

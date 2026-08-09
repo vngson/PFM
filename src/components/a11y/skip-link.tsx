@@ -1,5 +1,5 @@
 // SkipLink: link ẩn để keyboard user skip thẳng vào main content.
-// Phase 19: thêm vào root layout để cải thiện a11y.
+// Mount ở root layout để cải thiện a11y.
 // - Mặc định ẩn (sr-only), focus thì hiện ra ở góc trên-trái.
 // - Bấm Enter → cuộn xuống #main.
 

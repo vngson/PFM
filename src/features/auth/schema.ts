@@ -1,5 +1,5 @@
 // Zod schemas cho form auth — dùng chung giữa Server Action và client form.
-// Phase 25: factory pattern nhận `t` (translator).
+// Factory pattern nhận `t` (translator).
 import { z } from 'zod';
 
 export type AuthMessages = {

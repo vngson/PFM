@@ -4,7 +4,7 @@
 // - Mặc định type = expense (case phổ biến nhất). Có nút toggle sang income.
 // - Field tối thiểu: amount + category + account. Date = hôm nay. Note = optional.
 // - Sau khi save thành công: đóng dialog + reset form.
-// Phase 16: tối ưu cho user ghi nhanh mà không cần mở full form.
+// Tối ưu cho user ghi nhanh mà không cần mở full form.
 
 import { useEffect, useMemo, useState } from 'react';
 import { Plus, Minus, Zap } from 'lucide-react';
@@ -118,7 +118,7 @@ export function QuickAddForm({ accounts, categories }: QuickAddFormProps) {
     }
   }, [closeOnSuccess, type]);
 
-  // Phase 21: mở dialog khi nhận event 'pfm:open-quick-add' (từ MobileNav FAB).
+  // Mở dialog khi nhận event 'pfm:open-quick-add' (từ MobileNav FAB).
   useEffect(() => {
     const handler = () => setOpen(true);
     window.addEventListener('pfm:open-quick-add', handler);

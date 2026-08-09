@@ -1,5 +1,5 @@
 // Locale-aware number/date formatters for the PFM app.
-// Phase 25: dùng getLocale() từ Paraglide runtime để chuyển format
+// Dùng getLocale() từ Paraglide runtime để chuyển format
 // theo ngôn ngữ user chọn (vi → vi-VN, en → en-US).
 
 import { getLocale } from '@/paraglide/runtime';

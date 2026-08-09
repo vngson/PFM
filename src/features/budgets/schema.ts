@@ -1,7 +1,7 @@
 // Zod schemas cho budgets — validate form + Server Action input.
 // DB constraint: 1 budget / (user, category, period_month).
 // period_month luôn là ngày 1 của tháng (vd: 2026-08-01).
-// Phase 25: factory pattern nhận `t` (translator).
+// Factory pattern nhận `t` (translator).
 import { z } from 'zod';
 
 export type BudgetMessages = {

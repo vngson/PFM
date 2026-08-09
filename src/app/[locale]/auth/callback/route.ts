@@ -2,7 +2,7 @@
 // Sau khi user click link trong email, Supabase redirect về đây
 // kèm `?code=...`. Ta exchange code → session, rồi redirect về dashboard.
 //
-// Phase 25: route nằm trong /[locale]/auth/callback — Supabase email link
+// Route nằm trong /[locale]/auth/callback — Supabase email link
 // config phải trỏ tới `${SITE_URL}/${locale}/auth/callback`. Redirect sau
 // auth cũng phải có locale prefix.
 import { NextResponse, type NextRequest } from 'next/server';

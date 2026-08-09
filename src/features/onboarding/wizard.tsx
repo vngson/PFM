@@ -6,8 +6,8 @@
 // Step 3: Create first category (optional, can skip).
 // Sau khi complete: lưu flag vào localStorage để không hiện lại.
 //
-// Phase 22: chỉ hiện khi user chưa có account + category (DB-derived).
-// Phase 25: full i18n — toàn bộ UI text qua Paraglide messages.
+// Chỉ hiện khi user chưa có account + category (DB-derived).
+// Full i18n — toàn bộ UI text qua Paraglide messages.
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';

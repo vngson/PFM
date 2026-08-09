@@ -1,7 +1,7 @@
 // Layout cho mọi trang cần đăng nhập. Kiểm tra session bằng getUser()
 // (an toàn hơn getSession vì verify JWT với Supabase).
 // Nếu chưa login → redirect về /login.
-// Phase 16: Fetch accounts + categories song song để cấp cho QuickAddForm (FAB).
+// Fetch accounts + categories song song để cấp cho QuickAddForm (FAB).
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
@@ -34,7 +34,7 @@ export default async function ProtectedLayout({
     redirect(`/${locale}/login`);
   }
 
-  // Phase 16: parallel fetch cho QuickAddForm FAB.
+  // Parallel fetch cho QuickAddForm FAB.
   const [{ data: accounts }, { data: categories }] = await Promise.all([
     supabase
       .from('accounts')

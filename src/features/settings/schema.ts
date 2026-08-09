@@ -1,5 +1,5 @@
 // Zod schemas cho settings (profile + change password).
-// Phase 25: factory pattern nhận `t` (translator).
+// Factory pattern nhận `t` (translator).
 import { z } from 'zod';
 
 export type SettingsMessages = {

@@ -4,8 +4,8 @@
 // - Grid 7 cột (T2 → CN), 5-6 hàng.
 // - Mỗi cell: số ngày + list các occurrence (income green, expense red).
 // - Ô "today" highlight; ô ngoài tháng hiển thị mờ.
-// - Click cell → modal list chi tiết (optional, skip cho Phase 17).
-// Phase 17: derived từ occurrences prop (server pre-compute).
+// - Click cell → modal list chi tiết (optional, skip — chưa cần).
+// Derived từ occurrences prop (server pre-compute).
 
 import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';

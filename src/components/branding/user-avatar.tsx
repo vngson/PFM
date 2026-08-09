@@ -1,8 +1,7 @@
 'use client';
 
 // UserAvatar: header avatar + dropdown menu (email, secondary nav, logout).
-// Phase 15.4: chuyển nav phụ (Danh mục, Định kỳ, Cài đặt) từ header chính
-// vào đây để header gọn 1 dòng.
+// Nav phụ (Danh mục, Định kỳ, Cài đặt) đặt ở đây để header gọn 1 dòng.
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {

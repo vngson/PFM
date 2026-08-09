@@ -1,7 +1,7 @@
 'use client';
 
 // DeleteAccountCard: danger zone — buộc nhập email để xác nhận trước khi soft delete.
-// Phase 04 (PDPD): soft delete 30 ngày grace period. User login lại trong 30 ngày
+// Soft delete 30 ngày grace period. User login lại trong 30 ngày
 // để khôi phục; sau đó cron job xóa vĩnh viễn.
 import { useTransition, useState } from 'react';
 import { Trash2, Loader2 } from 'lucide-react';

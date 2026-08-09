@@ -1,4 +1,4 @@
-// FX (Foreign Exchange) helpers — Phase 20.
+// FX (Foreign Exchange) helpers.
 // - Cung cấp tỷ giá cố định giữa VND ↔ supported currencies.
 // - convertToVND(amount, code) → số VND tương đương.
 // - getSupportedCurrencies() → list mã currency.

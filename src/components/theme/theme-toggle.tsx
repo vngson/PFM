@@ -1,7 +1,7 @@
 'use client';
 
 // ThemeToggle: 3-state cycle (light → dark → system).
-// Phase 18: dùng useTheme từ next-themes để đọc/ghi theme + persist localStorage.
+// Dùng useTheme từ next-themes để đọc/ghi theme + persist localStorage.
 // Icon: Sun cho light, Moon cho dark, Monitor cho system.
 
 import { useEffect, useState } from 'react';

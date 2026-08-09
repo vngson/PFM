@@ -1,7 +1,7 @@
 'use server';
 
 // Server-side helper: tính các occurrences của recurring rules rơi vào 1 tháng (YYYY-MM).
-// Phase 17: dùng cho calendar view.
+// Dùng cho calendar view.
 // - Lấy tất cả rules active của user.
 // - Với mỗi rule, advance next_run_at bằng `advanceDate` cho đến khi vượt khỏi tháng.
 // - Include tất cả occurrences (không phải chỉ next_run_at đầu tiên).

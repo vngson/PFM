@@ -1,7 +1,7 @@
 // Trang quản lý giao dịch — Server Component fetch summary + list, Client Component render UI.
 // URL params: ?month=YYYY-MM&type=income|expense|transfer&q=note&before=YYYY-MM-DD
 // Neo-brutalism: bordered shadow cards cho summary chips, group theo ngày.
-// Phase 25: full i18n qua Paraglide messages + locale-aware formatters.
+// Full i18n qua Paraglide messages + locale-aware formatters.
 import Link from 'next/link';
 import { TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 

@@ -1,5 +1,5 @@
 // Zod schemas cho categories — dùng chung giữa Server Action và client form.
-// Phase 25: factory pattern nhận `t` (translator) để error messages theo locale.
+// Factory pattern nhận `t` (translator) để error messages theo locale.
 import { z } from 'zod';
 
 export type CategoryMessages = {

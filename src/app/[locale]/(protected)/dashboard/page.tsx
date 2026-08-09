@@ -1,7 +1,6 @@
-// Dashboard — Phase 8: thêm 3 chart (income/expense trend, category pie, account balances).
-// Vẫn giữ stat cards + quick actions từ các phase trước.
-// Phase 15: wrap charts trong Suspense để streaming từng phần, với skeleton fallback.
-// Phase 25: full i18n qua Paraglide messages + locale-aware format.
+// Dashboard: stat cards + 3 chart (income/expense trend, category pie, account balances) + quick actions.
+// Charts wrap trong Suspense để streaming từng phần, với skeleton fallback.
+// Full i18n qua Paraglide messages + locale-aware format.
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { Wallet, Tag, ArrowRight, Receipt, Target, TrendingUp, TrendingDown } from 'lucide-react';
@@ -62,7 +61,7 @@ export default async function DashboardPage() {
         .lte('occurred_at', end),
     ]);
 
-  // Phase 22: fetch full account + category cho OnboardingWizard.
+  // Fetch full account + category cho OnboardingWizard.
   // Cần full detail (name + color + icon) để wizard có thể verify sau khi user tạo.
   const [{ data: fullAccounts }, { data: fullCategories }] = await Promise.all([
     supabase
@@ -88,7 +87,7 @@ export default async function DashboardPage() {
     {},
   );
 
-  // Tổng số dư quy đổi về VND (Phase 20: unified balance)
+  // Tổng số dư quy đổi về VND (unified balance)
   const totalVnd = Object.entries(totalByCurrency).reduce((sum, [code, val]) => {
     const v = convertToVND(val, code);
     return sum + (v ?? 0);
@@ -120,7 +119,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-6 py-8">
-      {/* Phase 22: Onboarding cho first-time user (0 accounts + 0 categories). */}
+      {/* Onboarding cho first-time user (0 accounts + 0 categories). */}
       <OnboardingWizard
         accounts={(fullAccounts ?? []) as never}
         categories={(fullCategories ?? []) as never}

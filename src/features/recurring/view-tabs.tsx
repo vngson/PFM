@@ -1,7 +1,6 @@
 'use client';
 
 // ViewTabs: toggle giữa List view + Calendar view cho recurring page.
-// Phase 17: dùng cho /recurring.
 // - Default = list (giữ nguyên behavior).
 // - Calendar thì render RecurringCalendar với occurrences prop.
 

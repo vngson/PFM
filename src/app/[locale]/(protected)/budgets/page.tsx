@@ -1,7 +1,7 @@
 // Trang quản lý ngân sách theo category / tháng.
 // URL params: ?month=YYYY-MM (default = tháng hiện tại).
 // Server Component fetch listBudgetsWithSpent + expense categories.
-// Phase 25: full i18n qua Paraglide messages + month names động.
+// Full i18n qua Paraglide messages + month names động.
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Target } from 'lucide-react';
 

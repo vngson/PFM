@@ -1,6 +1,6 @@
 'use server';
 
-// Account deletion + restore actions (Phase 04 PDPD soft delete).
+// Account deletion + restore actions (PDPD soft delete).
 // requestAccountDeletion: set deleted_at + scheduled_purge_at, sign out.
 // restoreAccount: clear deleted_at, redirect to dashboard.
 

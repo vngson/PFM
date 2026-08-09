@@ -1,5 +1,5 @@
 // Pure helpers cho data export — dễ test, không phụ thuộc Supabase.
-// Phase 03 (PDPD): audit metadata + rate limit + size guard.
+// Audit metadata + rate limit + size guard.
 
 export const EXPORT_SCHEMA_VERSION = '1.0';
 export const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? '0.1.0';

@@ -1,6 +1,6 @@
 // Trang quản lý tài khoản — Server Component fetch data, Client Component render UI.
 // Neo-brutalism: bordered shadow card title, total chips bold uppercase.
-// Phase 25: full i18n qua Paraglide messages.
+// Full i18n qua Paraglide messages.
 import { listAccounts } from '@/features/accounts/actions';
 import { AccountForm } from '@/features/accounts/account-form';
 import { AccountList } from '@/features/accounts/account-list';
