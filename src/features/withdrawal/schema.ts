@@ -1,11 +1,25 @@
-// Zod schema cho withdrawal form — 1 lần rút tạo 2 transactions
-// (expense từ source + income vào cash wallet).
+// Zod schema cho withdrawal form.
+//
+// Một lần rút có thể tạo 3 hoặc 5 transactions tùy theo `withdrawal_bank_account_id`:
+//
+//   Same bank (nguồn = ngân hàng rút) → 3 giao dịch:
+//     - trừ tiền rút từ source, category "Rút tiền ATM"
+//     - trừ phí ATM từ source, category "Phí ATM ..."
+//     - cộng tiền mặt vào cash wallet
+//
+//   Cross bank (nguồn ≠ ngân hàng rút) → 5 giao dịch:
+//     - trừ tiền từ nguồn, category "Chuyển tiền" (chuyển sang ngân hàng rút)
+//     - cộng tiền vào ngân hàng rút, category "Nhận tiền ATM"
+//     - trừ tiền rút từ ngân hàng rút, category "Rút tiền ATM"
+//     - trừ phí ATM từ ngân hàng rút, category "Phí ATM ..."
+//     - cộng tiền mặt vào cash wallet
 //
 // Factory pattern nhận `t` (translator) để error messages theo locale.
 import { z } from 'zod';
 
 export type WithdrawalMessages = {
   source_account_required: () => string;
+  withdrawal_bank_required: () => string;
   category_required: () => string;
   amount_required: () => string;
   amount_positive: () => string;
@@ -19,6 +33,7 @@ export type WithdrawalMessages = {
 export const withdrawalSchema = (t: WithdrawalMessages) =>
   z.object({
     source_account_id: z.string().uuid(t.source_account_required()),
+    withdrawal_bank_account_id: z.string().uuid(t.withdrawal_bank_required()),
     category_id: z.string().uuid(t.category_required()),
     amount: z
       .string()

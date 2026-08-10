@@ -1,12 +1,25 @@
 'use client';
 
-// WithdrawalForm: dialog rút tiền mặt từ 1 tài khoản nguồn.
-// Submit tạo 2 transactions (expense từ source + income vào cash wallet).
+// WithdrawalForm: dialog rút tiền mặt qua ATM.
+//
+// Submit tạo 3 hoặc 5 transactions tùy theo nguồn rút (= hay ≠ ngân hàng rút):
+//
+//   Same bank (nguồn = ngân hàng rút): 3 giao dịch
+//     - trừ tiền rút từ ngân hàng
+//     - trừ phí ATM từ ngân hàng
+//     - cộng tiền mặt vào cash wallet
+//
+//   Cross bank (nguồn ≠ ngân hàng rút): 5 giao dịch
+//     - trừ tiền từ nguồn (chuyển sang ngân hàng)
+//     - cộng tiền vào ngân hàng
+//     - trừ tiền rút từ ngân hàng
+//     - trừ phí ATM từ ngân hàng
+//     - cộng tiền mặt vào cash wallet
 //
 // UX:
-// - User chọn nguồn (Momo/Agribank/...) và category phí ATM (Agribank, Vietcombank...).
+// - User chọn nguồn (Momo/Agribank/...), ngân hàng rút (Agribank/VCB/...), category phí ATM.
+// - Nếu nguồn = ngân hàng → 3 tx; nếu khác → 5 tx. Hint hiển thị số tx tương ứng.
 // - Khi chọn category, ô phí auto-fill từ category.withdrawal_fee.
-// - Khi nhập amount/fee, hiển thị "Tổng trừ từ nguồn" = amount + fee (read-only).
 // - Date mặc định hôm nay, cho chỉnh qua DatePicker.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Banknote, Pencil } from 'lucide-react';
@@ -40,6 +53,7 @@ import { createWithdrawal, type ActionState } from './actions';
 import * as m from '@/paraglide/messages';
 
 const FIRST_ACCOUNT = '__first__';
+const FIRST_BANK = '__first__';
 const FIRST_CATEGORY = '__first__';
 
 const initialState: ActionState = null;
@@ -49,6 +63,12 @@ type AtmCategory = Pick<Category, 'id' | 'name' | 'icon_name' | 'color' | 'withd
 interface WithdrawalFormProps {
   accounts: Pick<Account, 'id' | 'name' | 'type' | 'currency_code' | 'color' | 'icon_name'>[];
   atmCategories: AtmCategory[];
+  /** Danh sách tài khoản ngân hàng/ví điện tử để chọn "ngân hàng rút tiền".
+   *  Mặc định = danh sách `accounts` đã lọc cash wallet. */
+  bankOptions: Pick<
+    Account,
+    'id' | 'name' | 'type' | 'currency_code' | 'color' | 'icon_name'
+  >[];
   /** Trigger hiển thị nút (mặc định "create"). */
   trigger?: 'create';
 }
@@ -63,6 +83,7 @@ const formatVnd = (n: number): string =>
 export function WithdrawalForm({
   accounts,
   atmCategories,
+  bankOptions,
   trigger = 'create',
 }: WithdrawalFormProps) {
   const action = createWithdrawal;
@@ -83,6 +104,12 @@ export function WithdrawalForm({
   const [sourceId, setSourceId] = useState<string>(
     sourceOptions[0]?.id ?? '',
   );
+  // Ngân hàng rút mặc định = nguồn (nếu nguồn là bank/e-wallet) hoặc bank đầu tiên.
+  const initialBankId =
+    sourceOptions[0]?.id && bankOptions.some((b) => b.id === sourceOptions[0].id)
+      ? sourceOptions[0].id
+      : bankOptions[0]?.id ?? '';
+  const [bankId, setBankId] = useState<string>(initialBankId);
   const [categoryId, setCategoryId] = useState<string>(
     atmCategories[0]?.id ?? '',
   );
@@ -94,11 +121,21 @@ export function WithdrawalForm({
   );
   const [occurredAt, setOccurredAt] = useState<string>(todayIso());
 
+  // Same bank (3 tx) vs cross bank (5 tx)
+  const isSameBank = sourceId !== '' && bankId !== '' && sourceId === bankId;
+  const txCount = isSameBank ? 3 : 5;
+
   // Mở dialog: reset form về giá trị mặc định. Viết trong handler (event-driven)
   // thay vì useEffect để tránh "setState in effect" anti-pattern.
   const handleOpenChange = (next: boolean) => {
     if (next) {
-      setSourceId(sourceOptions[0]?.id ?? '');
+      const firstSrc = sourceOptions[0]?.id ?? '';
+      setSourceId(firstSrc);
+      setBankId(
+        firstSrc && bankOptions.some((b) => b.id === firstSrc)
+          ? firstSrc
+          : bankOptions[0]?.id ?? '',
+      );
       setCategoryId(atmCategories[0]?.id ?? '');
       setAmount('');
       setFee(
@@ -109,6 +146,14 @@ export function WithdrawalForm({
       setOccurredAt(todayIso());
     }
     setOpen(next);
+  };
+
+  // Khi user đổi nguồn → nếu nguồn có trong bankOptions, set bankId = sourceId (same bank mặc định).
+  const handleSourceChange = (id: string) => {
+    setSourceId(id);
+    if (bankOptions.some((b) => b.id === id)) {
+      setBankId(id);
+    }
   };
 
   // Auto-close dialog khi submit thành công (useDialogFormState detect pending flip + null state).
@@ -163,6 +208,7 @@ export function WithdrawalForm({
   );
 
   const noSources = sourceOptions.length === 0;
+  const noBanks = bankOptions.length === 0;
   const noAtmCategories = atmCategories.length === 0;
 
   return (
@@ -191,7 +237,7 @@ export function WithdrawalForm({
                   { value: FIRST_ACCOUNT, label: m.withdrawal_source_placeholder() },
                   ...sourceOptions.map((a) => ({ value: a.id, label: a.name })),
                 ]}
-                onValueChange={(v) => v && v !== FIRST_ACCOUNT && setSourceId(v)}
+                onValueChange={(v) => v && v !== FIRST_ACCOUNT && handleSourceChange(v)}
               >
                 <SelectTrigger id="source_account_id" className="w-full">
                   <SelectValue placeholder={m.withdrawal_source_placeholder()} />
@@ -224,6 +270,64 @@ export function WithdrawalForm({
               {fieldError('source_account_id') ? (
                 <p className="font-heading text-xs font-bold uppercase tracking-wide text-destructive">
                   ⚠ {fieldError('source_account_id')}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="withdrawal_bank_account_id">
+                {m.withdrawal_bank_label()}
+              </Label>
+              <input
+                type="hidden"
+                name="withdrawal_bank_account_id"
+                value={bankId}
+              />
+              <Select
+                value={bankId || FIRST_BANK}
+                items={[
+                  { value: FIRST_BANK, label: m.withdrawal_bank_placeholder() },
+                  ...bankOptions.map((b) => ({ value: b.id, label: b.name })),
+                ]}
+                onValueChange={(v) => v && v !== FIRST_BANK && setBankId(v)}
+              >
+                <SelectTrigger
+                  id="withdrawal_bank_account_id"
+                  className="w-full"
+                >
+                  <SelectValue placeholder={m.withdrawal_bank_placeholder()} />
+                </SelectTrigger>
+                <SelectContent>
+                  {noBanks ? (
+                    <SelectItem value="__empty_bank__" disabled>
+                      {m.withdrawal_bank_placeholder()}
+                    </SelectItem>
+                  ) : (
+                    bankOptions.map((bank) => {
+                      const Icon = getIcon(bank.icon_name ?? '');
+                      return (
+                        <SelectItem key={bank.id} value={bank.id}>
+                          <span className="inline-flex items-center gap-2">
+                            <span
+                              className="inline-flex size-4 shrink-0 items-center justify-center border border-border text-white"
+                              style={{ backgroundColor: bank.color ?? '#64748b' }}
+                            >
+                              <Icon className="size-3" />
+                            </span>
+                            <span>{bank.name}</span>
+                          </span>
+                        </SelectItem>
+                      );
+                    })
+                  )}
+                </SelectContent>
+              </Select>
+              <p className="font-body text-xs text-muted-foreground">
+                {m.withdrawal_bank_hint({ count: txCount })}
+              </p>
+              {fieldError('withdrawal_bank_account_id') ? (
+                <p className="font-heading text-xs font-bold uppercase tracking-wide text-destructive">
+                  ⚠ {fieldError('withdrawal_bank_account_id')}
                 </p>
               ) : null}
             </div>
@@ -382,7 +486,14 @@ export function WithdrawalForm({
             </Button>
             <Button
               type="submit"
-              disabled={pending || noSources || noAtmCategories || amountNum <= 0}
+              disabled={
+                pending ||
+                noSources ||
+                noBanks ||
+                noAtmCategories ||
+                amountNum <= 0 ||
+                !bankId
+              }
             >
               {pending ? m.common_saving() : m.withdrawal_create_btn()}
             </Button>
