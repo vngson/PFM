@@ -1,16 +1,17 @@
 'use client';
 
-// FilterChipRow: 4 chip pill để filter theo type giao dịch.
-// URL-driven: click chip sẽ push ?type=income|expense|transfer để shareable URL.
-// "Tất cả" chip → clear param.
+// FilterChipRow: chip pill để filter theo type giao dịch.
+// URL-driven: click chip sẽ push ?type=income|expense để shareable URL.
+// "Tất cả" chip → clear param. Không có chip transfer — chuyển tiền giữa 2 account
+// cùng user không cần filter riêng; xem giao dịch chuyển tiền ở tab account detail.
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTransition } from 'react';
-import { Receipt, ArrowDownLeft, ArrowUpRight, ArrowLeftRight, ListFilter } from 'lucide-react';
+import { Receipt, ArrowDownLeft, ArrowUpRight, ListFilter } from 'lucide-react';
 
 import type { Transaction } from '@/types/database';
 import * as m from '@/paraglide/messages';
 
-const TYPE_VALUES = ['income', 'expense', 'transfer'] as const satisfies readonly Transaction['type'][];
+const TYPE_VALUES = ['income', 'expense'] as const satisfies readonly Transaction['type'][];
 
 interface ChipDef {
   value: Transaction['type'] | null;
@@ -22,7 +23,6 @@ const CHIPS: ChipDef[] = [
   { value: null, label: () => m.transactions_filter_all_chip(), icon: ListFilter },
   { value: 'income', label: () => m.transactions_filter_income_chip(), icon: ArrowDownLeft },
   { value: 'expense', label: () => m.transactions_filter_expense_chip(), icon: ArrowUpRight },
-  { value: 'transfer', label: () => m.transactions_filter_transfer_chip(), icon: ArrowLeftRight },
 ];
 
 interface FilterChipRowProps {

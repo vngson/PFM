@@ -1,5 +1,7 @@
 // Trang quản lý giao dịch — Server Component fetch summary + list, Client Component render UI.
-// URL params: ?month=YYYY-MM&type=income|expense|transfer&q=note&before=YYYY-MM-DD
+// URL params: ?month=YYYY-MM&type=income|expense&q=note&before=YYYY-MM-DD
+// 'transfer' không còn ở đây — chip filter transfer đã bị loại bỏ; legacy URL
+// ?type=transfer sẽ fallback về undefined và hiển thị tab "Tất cả".
 // Neo-brutalism: bordered shadow cards cho summary chips, group theo ngày.
 // Full i18n qua Paraglide messages + locale-aware formatters.
 import Link from 'next/link';
@@ -11,7 +13,7 @@ import {
   listCategoriesForSelect,
   listTransactions,
 } from '@/features/transactions/actions';
-import { listAtmFeeCategories } from '@/features/withdrawal/actions';
+import { listAtmFeeCategories, listWithdrawalBankOptions } from '@/features/withdrawal/actions';
 import { WithdrawalForm } from '@/features/withdrawal/withdrawal-form';
 import { TransferForm } from '@/features/transfer/transfer-form';
 import type { Transaction } from '@/types/database';
@@ -32,7 +34,7 @@ function currentMonth(): string {
 }
 
 const PAGE_SIZE = 50;
-const TYPE_VALUES = ['income', 'expense', 'transfer'] as const;
+const TYPE_VALUES = ['income', 'expense'] as const;
 
 interface TransactionsPageProps {
   searchParams: Promise<{
@@ -54,7 +56,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
   const before = sp.before && /^\d{4}-\d{2}-\d{2}$/.test(sp.before) ? sp.before : undefined;
 
   // Parallel fetch: summary (luôn lấy theo month) + accounts + categories + transactions (filter)
-  const [summary, accounts, categories, txnResult, atmCategories] = await Promise.all([
+  const [summary, accounts, categories, txnResult, atmCategories, bankOptions] = await Promise.all([
     getMonthSummary(month),
     listActiveAccounts(),
     listCategoriesForSelect(),
@@ -66,6 +68,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
       limit: PAGE_SIZE,
     }),
     listAtmFeeCategories(),
+    listWithdrawalBankOptions(),
   ]);
 
   // Cursor cho load-more: occurred_at của row cuối cùng (cũ nhất trong trang hiện tại)
@@ -94,7 +97,11 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
           trigger="create"
         />
         <div className="flex items-center gap-2">
-          <WithdrawalForm accounts={accounts} atmCategories={atmCategories} />
+          <WithdrawalForm
+            accounts={accounts}
+            atmCategories={atmCategories}
+            bankOptions={bankOptions}
+          />
           <TransferForm accounts={accounts} />
           <ExportButton action={exportTransactionsCSV} />
         </div>
