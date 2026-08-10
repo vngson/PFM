@@ -10,6 +10,7 @@ import { Plus, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { MonthPicker } from '@/components/ui/date-picker';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Dialog,
@@ -170,12 +171,12 @@ export function BudgetForm({
 
             <div className="space-y-2">
               <Label htmlFor="period_month">{m.budgets_form_month_label()}</Label>
-              <Input
+              <MonthPicker
                 id="period_month"
                 name="period_month"
-                type="month"
                 defaultValue={budget?.period_month?.slice(0, 7) ?? defaultMonth}
                 required
+                aria-invalid={Boolean(fieldError('period_month'))}
               />
               {fieldError('period_month') ? (
                 <p className="font-heading text-xs font-bold uppercase tracking-wide text-destructive">

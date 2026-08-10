@@ -6,16 +6,10 @@
 // - Actions: Sửa, Xoá (qua inline <BudgetForm trigger="edit">).
 // Neo-brutalism: border + shadow + progress bar dày 4px.
 import { useState, useTransition } from 'react';
-import { AlertTriangle, MoreHorizontal, Target, Trash2 } from 'lucide-react';
+import { AlertTriangle, Target, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,11 +19,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
 import { getIcon } from '@/features/categories/icon-catalog';
-import type { Budget, Category } from '@/types/database';
+import type { Budget } from '@/types/database';
 import type { BudgetWithSpent } from './actions';
 import { BudgetForm } from './budget-form';
 import { deleteBudget } from './actions';
@@ -81,17 +74,17 @@ function statusFor(percent: number): {
 
 export function BudgetList({ budgets, categories }: BudgetListProps) {
   const [pending, startTransition] = useTransition();
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = (id: string) => {
     startTransition(async () => {
       try {
         await deleteBudget(id);
         notify.success(m.budgets_delete_toast());
-        setDeleteId(null);
+        setDeletingId(null);
       } catch (e) {
         notify.error(e instanceof Error ? e.message : m.budgets_err_delete());
-        setDeleteId(null);
+        setDeletingId(null);
       }
     });
   };
@@ -194,46 +187,15 @@ export function BudgetList({ budgets, categories }: BudgetListProps) {
                     defaultMonth={b.period_month.slice(0, 7)}
                     trigger="edit"
                   />
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={
-                        <Button variant="ghost" size="icon-sm" aria-label={m.accounts_actions_aria()}>
-                          <MoreHorizontal className="size-4" />
-                        </Button> as React.ReactElement
-                      }
-                    />
-                    <DropdownMenuContent align="end">
-                      <AlertDialog
-                        open={deleteId === b.id}
-                        onOpenChange={(o) => setDeleteId(o ? b.id : null)}
-                      >
-                        <AlertDialogTrigger
-                          render={
-                            <DropdownMenuItem variant="destructive">
-                              <Trash2 className="size-4" /> {m.common_delete()}
-                            </DropdownMenuItem> as React.ReactElement
-                          }
-                        />
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>{m.budgets_delete_title()}</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              {m.budgets_delete_desc()}
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDelete(b.id)}
-                              disabled={pending}
-                            >
-                              {pending ? m.common_deleting() : m.common_delete()}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    aria-label={m.budgets_delete_title()}
+                    onClick={() => setDeletingId(b.id)}
+                    data-destructive="true"
+                  >
+                    <Trash2 className="size-3.5" /> {m.common_delete()}
+                  </Button>
                 </div>
               </div>
 
@@ -279,6 +241,35 @@ export function BudgetList({ budgets, categories }: BudgetListProps) {
           );
         })}
       </div>
+
+      {/* Delete confirm mount 1 lần ở root, không bên trong dropdown — tránh
+          Dialog unmount khi Menu đóng. */}
+      <AlertDialog
+        open={deletingId !== null}
+        onOpenChange={(o) => {
+          if (!o) setDeletingId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{m.budgets_delete_title()}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {m.budgets_delete_desc()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deletingId) handleDelete(deletingId);
+              }}
+              disabled={pending}
+            >
+              {pending ? m.common_deleting() : m.common_delete()}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
