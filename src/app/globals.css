@@ -186,23 +186,15 @@
     color: #000000;
   }
   /* View Transitions: snap ngắn 120ms linear cho neo-brutalism (mechanical feel).
-     Old trang fade out + translateY -8px. New trang fade in + translateY +8px → 0. */
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation-duration: 90ms;
-    animation-timing-function: linear;
-  }
-  ::view-transition-old(root) {
-    animation-name: snap-out;
-  }
-  ::view-transition-new(root) {
-    animation-name: snap-in;
-  }
-  /* Tôn trọng prefers-reduced-motion: tắt snap, swap tức thì. */
+     Hiện tại TẮT (next.config.ts experimental.viewTransition=false) — DOM mutate
+     đồng bộ khi mở Dialog/Menu gây InvalidStateError. Re-enable khi đã scope
+     transition về <main> thay vì root. */
+  /* Tôn trọng prefers-reduced-motion: */
   @media (prefers-reduced-motion: reduce) {
-    ::view-transition-old(root),
-    ::view-transition-new(root) {
-      animation: none;
+    /* Tắt nudge 100ms trên close button — dùng compositor-friendly nhưng
+       vẫn có thể gây khó chịu cho người dùng giảm motion. */
+    .cn-toast-close {
+      transition: none !important;
     }
   }
 
@@ -217,14 +209,199 @@
   .animate-brutal-shake {
     animation: brutalShake 0.4s ease-in-out;
   }
+
+  /* DropdownMenuItem hover/highlight states — CSS thuần, không qua Tailwind dynamic selector.
+     Base UI set data-highlighted khi user hover/focus bằng keyboard. Cần đảm bảo cả text +
+     svg con đều đổi màu để contrast với background. */
+  [data-slot="dropdown-menu-item"]:not([data-variant="destructive"])[data-highlighted] {
+    background-color: var(--secondary);
+    color: var(--secondary-foreground);
+  }
+  [data-slot="dropdown-menu-item"]:not([data-variant="destructive"])[data-highlighted] :is(svg) {
+    color: var(--secondary-foreground);
+  }
+  [data-slot="dropdown-menu-item"][data-variant="destructive"] {
+    color: var(--destructive);
+  }
+  [data-slot="dropdown-menu-item"][data-variant="destructive"] :is(svg) {
+    color: var(--destructive);
+  }
+  [data-slot="dropdown-menu-item"][data-variant="destructive"][data-highlighted] {
+    background-color: var(--destructive);
+    color: var(--destructive-foreground);
+  }
+  [data-slot="dropdown-menu-item"][data-variant="destructive"][data-highlighted] :is(svg) {
+    color: var(--destructive-foreground);
+  }
+
+  /* === Sonner toast (neo-brutal) ===
+     Sonner applies its own inline styles; we override with !important so the
+     neo-brutal look wins regardless of sonner's defaults. Per-variant colors
+     come from CSS variables defined in :root / .dark so theme switching Just Works. */
+  .cn-toast {
+    border: 2px solid var(--border) !important;
+    border-radius: 0 !important;
+    box-shadow: var(--shadow-brutal-sm) !important;
+    background-color: var(--popover) !important;
+    color: var(--popover-foreground) !important;
+    font-family: var(--font-heading) !important;
+    padding: 12px 16px !important;
+    min-width: 280px !important;
+    max-width: 360px !important;
+    overflow: visible !important;
+    text-wrap: balance;
+  }
+  .cn-toast-title {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+  }
+  .cn-toast-desc {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    font-family: var(--font-body) !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+  }
+  .cn-toast-icon {
+    width: 28px !important;
+    height: 28px !important;
+    border: 2px solid var(--border) !important;
+    border-radius: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    background-color: var(--popover) !important;
+  }
+  .cn-toast-close {
+    border: 2px solid var(--border) !important;
+    border-radius: 0 !important;
+    background-color: var(--popover) !important;
+    transition: transform 0.1s ease-out, box-shadow 0.1s ease-out,
+      background-color 0.1s ease-out !important;
+  }
+  .cn-toast-close:hover {
+    background-color: var(--muted) !important;
+    transform: translate(-1px, -1px) !important;
+    box-shadow: var(--shadow-brutal-sm) !important;
+  }
+  [data-sonner-toast][data-type="success"] {
+    background-color: var(--cn-toast-success-bg) !important;
+    border-color: var(--cn-toast-success-border) !important;
+    color: var(--cn-toast-success-text) !important;
+  }
+  [data-sonner-toast][data-type="success"] [data-sonner-toast-icon] {
+    background-color: var(--cn-toast-success-border) !important;
+    color: var(--destructive-foreground) !important;
+  }
+  [data-sonner-toast][data-type="error"] {
+    background-color: var(--cn-toast-error-bg) !important;
+    border-color: var(--cn-toast-error-border) !important;
+    color: var(--cn-toast-error-text) !important;
+  }
+  [data-sonner-toast][data-type="error"] [data-sonner-toast-icon] {
+    background-color: var(--cn-toast-error-border) !important;
+    color: var(--destructive-foreground) !important;
+  }
+  [data-sonner-toast][data-type="warning"] {
+    background-color: var(--cn-toast-warning-bg) !important;
+    border-color: var(--cn-toast-warning-border) !important;
+    color: var(--cn-toast-warning-text) !important;
+  }
+  [data-sonner-toast][data-type="warning"] [data-sonner-toast-icon] {
+    background-color: var(--cn-toast-warning-border) !important;
+    color: var(--destructive-foreground) !important;
+  }
+  [data-sonner-toast][data-type="info"] {
+    background-color: var(--cn-toast-info-bg) !important;
+    border-color: var(--cn-toast-info-border) !important;
+    color: var(--cn-toast-info-text) !important;
+  }
+  [data-sonner-toast][data-type="info"] [data-sonner-toast-icon] {
+    background-color: var(--cn-toast-info-border) !important;
+    color: var(--destructive-foreground) !important;
+  }
 }
 
-@keyframes snap-out {
-  from { opacity: 1; transform: translateY(0); }
-  to   { opacity: 0; transform: translateY(-8px); }
+/* Button destructive ghost-hover — nút "Xoá" inline trong row table (account-list,
+   category-list, budget-list, recurring-list). Đặt ngoài @layer base để thắng Tailwind
+   utility classes (text-foreground ngầm của variant ghost). */
+[data-slot="button"][data-destructive="true"] {
+  color: var(--destructive);
+}
+[data-slot="button"][data-destructive="true"] :is(svg) {
+  color: var(--destructive);
+}
+[data-slot="button"][data-destructive="true"]:hover,
+[data-slot="button"][data-destructive="true"]:focus-visible {
+  background-color: var(--destructive) !important;
+  color: var(--destructive-foreground) !important;
+  border-color: var(--destructive) !important;
+}
+[data-slot="button"][data-destructive="true"]:hover :is(svg),
+[data-slot="button"][data-destructive="true"]:focus-visible :is(svg) {
+  color: var(--destructive-foreground) !important;
 }
 
-@keyframes snap-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+/* Sonner variant color tokens — light theme */
+:root {
+  --cn-toast-success-bg: #7fb06940;
+  --cn-toast-success-text: #1a4d1a;
+  --cn-toast-success-border: #7fb069;
+  --cn-toast-error-bg: #ff4d4d40;
+  --cn-toast-error-text: #7a1f1f;
+  --cn-toast-error-border: #ff4d4d;
+  --cn-toast-warning-bg: #f59e0b40;
+  --cn-toast-warning-text: #7a4d00;
+  --cn-toast-warning-border: #f59e0b;
+  --cn-toast-info-bg: #9b7ede40;
+  --cn-toast-info-text: #3d2f5a;
+  --cn-toast-info-border: #9b7ede;
+}
+
+/* Sonner variant color tokens — dark theme */
+.dark {
+  --cn-toast-success-bg: #7fb06930;
+  --cn-toast-success-text: #c8e6b9;
+  --cn-toast-success-border: #7fb069;
+  --cn-toast-error-bg: #ff4d4d30;
+  --cn-toast-error-text: #ffc1c1;
+  --cn-toast-error-border: #ff4d4d;
+  --cn-toast-warning-bg: #f59e0b30;
+  --cn-toast-warning-text: #fcd9a0;
+  --cn-toast-warning-border: #f59e0b;
+  --cn-toast-info-bg: #9b7ede30;
+  --cn-toast-info-text: #d8c8f0;
+  --cn-toast-info-border: #9b7ede;
+}
+
+/* Neo-brutal scrollbar — dày, đậm, dễ thấy hơn scrollbar native mỏng (6-8px).
+   Browser mặc định trên Linux/Windows hay chỉ 6px nên user không nhận ra có scroll.
+   Áp dụng cho mọi phần tử có overflow-y-auto; các scroll mặc định trong page (window)
+   vẫn giữ scrollbar OS để không che nội dung. */
+.scrollbar-brutal {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.scrollbar-brutal::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.scrollbar-brutal::-webkit-scrollbar-track {
+  background: var(--muted);
+  border-left: 2px solid var(--border);
+}
+
+.scrollbar-brutal::-webkit-scrollbar-thumb {
+  background: var(--secondary);
+  border: 2px solid var(--border);
+  box-shadow: 2px 2px 0 0 var(--border);
+}
+
+.scrollbar-brutal::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary-foreground);
 }

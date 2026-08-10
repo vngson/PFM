@@ -88,7 +88,10 @@ function DropdownMenuItem({
       data-inset={inset}
       data-variant={variant}
       className={cn(
-        "group/dropdown-menu-item relative flex cursor-default items-center gap-2 px-2 py-1.5 text-sm font-medium outline-hidden select-none focus:bg-secondary focus:text-secondary-foreground not-data-[variant=destructive]:focus:**:text-secondary-foreground data-inset:pl-7 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive data-[variant=destructive]:focus:text-destructive-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-[variant=destructive]:*:[svg]:text-destructive-foreground",
+        // Base UI Menu highlight state. Các data-attribute dưới đây đều được Base UI set
+        // khi user hover hoặc focus bằng keyboard. CSS thuần trong globals.css đảm bảo
+        // contrast cho cả text + svg con (tránh Tailwind dynamic selector khó generate).
+        "group/dropdown-menu-item relative flex cursor-default items-center gap-2 px-2 py-1.5 text-sm font-medium outline-hidden select-none data-inset:pl-7 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
       {...props}

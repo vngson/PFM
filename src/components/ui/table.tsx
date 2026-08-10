@@ -7,9 +7,13 @@ import { cn } from "@/lib/utils"
 // Neo-brutalism table: border-2 đen trên container + header nền vàng in đậm uppercase.
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
+    // Bỏ overflow-x-auto: scroll ngang cản trở CSS `position: sticky` bên trong
+    // (sticky chỉ dính theo scroll container cha — nếu cha có overflow khác
+    // chiều axis thì sticky hoàn toàn không có tác dụng). Khi nào table thực
+    // sự quá rộng, caller chọn variant overflow thay vì implicit.
     <div
       data-slot="table-container"
-      className="relative w-full overflow-x-auto border-2 border-border bg-card shadow-brutal-sm"
+      className="relative w-full border-2 border-border bg-card shadow-brutal-sm"
     >
       <table
         data-slot="table"

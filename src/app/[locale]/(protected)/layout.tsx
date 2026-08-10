@@ -12,6 +12,7 @@ import { UserAvatar } from '@/components/branding/user-avatar';
 import { PageTransition } from '@/components/branding/page-transition';
 import { SearchTrigger } from '@/features/search/search-trigger';
 import { QuickAddForm } from '@/features/transactions/quick-add-form';
+import { ScrollToTop } from '@/components/scroll-to-top';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { LanguageSwitcher } from '@/components/i18n/language-switcher';
 import * as m from '@/paraglide/messages';
@@ -73,6 +74,7 @@ export default async function ProtectedLayout({
         accounts={accounts ?? []}
         categories={categories ?? []}
       />
+      <ScrollToTop />
       <MobileNav />
       <footer className="border-t-4 border-border bg-card py-3">
         <nav

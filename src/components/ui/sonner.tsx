@@ -36,9 +36,22 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--border-radius": "var(--radius)",
         } as React.CSSProperties
       }
+      // 5s — slightly longer than sonner default 4s. Neo-brutal users benefit
+      // from extra reading time for bordered, uppercase-heavy titles.
+      duration={5000}
+      // Hookable classNames. CSS in globals.css targets these to apply
+      // neo-brutal style (border-2, shadow-brutal-sm, uppercase, no radius).
       toastOptions={{
         classNames: {
           toast: "cn-toast",
+          title: "cn-toast-title",
+          description: "cn-toast-desc",
+          icon: "cn-toast-icon",
+          closeButton: "cn-toast-close",
+          success: "cn-toast-success",
+          error: "cn-toast-error",
+          warning: "cn-toast-warning",
+          info: "cn-toast-info",
         },
       }}
       {...props}

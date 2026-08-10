@@ -20,7 +20,7 @@ export function ExportButton({
   action,
   label,
   variant = 'outline',
-  size = 'sm',
+  size = 'default',
 }: ExportButtonProps) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
