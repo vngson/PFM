@@ -207,7 +207,7 @@ export function TransactionList({
                             <ArrowUpRight className="size-5" />
                           )}
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                             <span className="font-heading text-sm font-bold uppercase tracking-wide">
                               {row.category?.name ?? TYPE_META[row.type].label()}
@@ -216,7 +216,7 @@ export function TransactionList({
                             {row.note ? (
                               <>
                                 <span className="text-xs text-muted-foreground">·</span>
-                                <span className="truncate text-xs italic text-muted-foreground">
+                                <span className="text-xs italic text-muted-foreground">
                                   {row.note}
                                 </span>
                               </>
