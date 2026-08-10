@@ -1,0 +1,32 @@
+-- =========================================================================
+-- 0008_momo_subwallets.sql
+--
+-- Intent: split legacy "Momo" account into 3 sub-accounts + 2 daily recurring
+-- rules for compound interest (4%/year, computed daily via Math.round on the
+-- current account balance).
+--
+-- This file is documentation-only. The actual data writes are performed by
+-- scripts/seed-momo-subwallets.mjs using the service-role key. The compound
+-- refresh is implemented in src/features/recurring/actions.ts inside
+-- generateFromRecurring — detected by the note suffix "(4%/năm)".
+--
+-- Schema: zero migration required. The recurring_frequency enum already
+-- contains 'every_n_days' (added in 0006_recurring_interval_days.sql) and the
+-- recurring_transactions.interval_days column is already present.
+-- =========================================================================
+
+-- Rollback (run manually if needed):
+--   update public.accounts
+--      set is_archived = false
+--    where user_id = <uid> and name = 'Momo';
+--   update public.accounts
+--      set is_archived = true
+--    where user_id = <uid>
+--      and name in ('Momo - Túi thần tài', 'Momo - Quỹ', 'Momo - CVS đầu tư');
+--   update public.recurring_transactions
+--      set is_active = false
+--    where user_id = <uid>
+--      and note in (
+--        'Lãi Túi thần tài (4%/năm)',
+--        'Lãi Quỹ tiết kiệm (4%/năm)'
+--      );
