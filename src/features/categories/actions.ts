@@ -151,8 +151,10 @@ export async function listCategories(): Promise<Category[]> {
     .from('categories')
     .select('*')
     .eq('user_id', user.id)
+    // Group theo type (Chi trước / Thu sau do enum order), trong mỗi group sort a-z theo name.
+    // `sort_order` chỉ dùng làm fallback khi user tự sắp xếp — bỏ khỏi ORDER BY ở đây
+    // để người dùng không bị "lệch" khi đặt sort_order tay.
     .order('type', { ascending: true })
-    .order('sort_order', { ascending: true })
     .order('name', { ascending: true });
   if (error) throw new Error(error.message);
   return (data ?? []) as Category[];
