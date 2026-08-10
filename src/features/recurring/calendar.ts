@@ -3,8 +3,10 @@
 // Server-side helper: tính các occurrences của recurring rules rơi vào 1 tháng (YYYY-MM).
 // Dùng cho calendar view.
 // - Lấy tất cả rules active của user.
-// - Với mỗi rule, advance next_run_at bằng `advanceDate` cho đến khi vượt khỏi tháng.
-// - Include tất cả occurrences (không phải chỉ next_run_at đầu tiên).
+// - Với mỗi rule, advance từ `start_date` cho đến khi vượt `range.end`.
+// - Hiển thị TẤT CẢ occurrences rơi vào tháng (cả đã sinh lẫn tương lai) để user
+//   thấy được tháng đó có bao nhiêu khoản. `next_run_at` là "vị trí cursor hiện tại"
+//   nhưng KHÔNG phải điểm bắt đầu duy nhất — back-fill từ `start_date`.
 
 import { createClient } from '@/lib/supabase/server';
 import { advanceDate } from './frequency';
@@ -51,7 +53,7 @@ export async function getRecurringOccurrences(
   const { data, error } = await supabase
     .from('recurring_transactions')
     .select(
-      'id, type, amount, note, frequency, is_active, next_run_at, end_date, start_date, account:accounts(id, name, currency_code, color), category:categories(id, name, color, icon_name)',
+      'id, type, amount, note, frequency, interval_days, is_active, next_run_at, end_date, start_date, account:accounts(id, name, currency_code, color), category:categories(id, name, color, icon_name)',
     )
     .eq('user_id', user.id)
     .eq('is_active', true);
@@ -65,6 +67,7 @@ export async function getRecurringOccurrences(
       amount: number;
       note: string | null;
       frequency: RecurringTransaction['frequency'];
+      interval_days: number | null;
       is_active: boolean;
       next_run_at: string;
       end_date: string | null;
@@ -73,9 +76,17 @@ export async function getRecurringOccurrences(
       category: { id: string; name: string; color: string; icon_name: string } | null;
     };
 
-    // Advance từ next_run_at cho đến khi vượt end-of-month
-    let cursor = r.next_run_at;
-    while (cursor <= range.end) {
+    // Back-fill từ `start_date` để calendar thấy được cả các khoản đã sinh trong tháng
+    // (không chỉ những khoản còn ở tương lai của `next_run_at`). Đây là yêu cầu UX
+    // "tháng này có bao nhiêu khoản" — user cần thấy tổng thể.
+    //
+    // Safety cap: tối đa 366 occurrence / rule (1 năm) — đủ cho mọi frequency.
+    // Nếu frequency unknown / malformed → advanceDate không làm gì → vòng lặp vô tận
+    // → cap này chặn server hang và return empty cho rule đó thay vì đơ.
+    const MAX_OCCURRENCES = 366;
+    let cursor = r.start_date;
+    let steps = 0;
+    while (cursor <= range.end && steps < MAX_OCCURRENCES) {
       if (r.end_date && cursor > r.end_date) break;
       if (cursor >= range.start) {
         occurrences.push({
@@ -97,7 +108,11 @@ export async function getRecurringOccurrences(
           },
         });
       }
-      cursor = advanceDate(cursor, r.frequency);
+      const next = advanceDate(cursor, r.frequency, r.interval_days);
+      // Defensive: nếu advance không advance (frequency unknown) → break tránh hang.
+      if (next <= cursor) break;
+      cursor = next;
+      steps += 1;
     }
   }
 

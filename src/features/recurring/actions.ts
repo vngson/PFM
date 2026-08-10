@@ -3,14 +3,53 @@
 // Server Actions cho recurring_transactions CRUD + manual generate.
 // Mọi action: (1) zod re-validate, (2) auth check, (3) RLS enforce tự động.
 // `generateFromRecurring`: insert transaction cho kỳ đến hạn, advance next_run_at.
+// `getOccurrencesForMonth`: query occurrences của 1 tháng (YYYY-MM) cho calendar view.
 
 import { revalidatePath } from 'next/cache';
+import { getRecurringOccurrences } from './calendar';
 import * as m from '@/paraglide/messages';
 import { createClient } from '@/lib/supabase/server';
 import { recurringSchema } from './schema';
 import type { RecurringInput } from './schema';
 import { advanceDate, todayIso } from './frequency';
 import type { Account, RecurringTransaction, RecurringFrequency } from '@/types/database';
+
+/** Marker phát hiện rule compound interest 4%/năm. Đặt trong note suffix.
+ *  Nếu sau này có rate khác (vd 5%/năm), đổi sang regex /(\d+)%\/năm$/. */
+const COMPOUND_INTEREST_MARKER = '(4%/năm)';
+
+/** Tính lãi ngày từ balance hiện tại, round về VND nguyên. */
+function computeDailyInterest(currentBalance: number): number {
+  return Math.round((currentBalance ?? 0) * 0.04 / 365);
+}
+
+/** Nếu rule là compound interest, UPDATE amount theo balance mới. Trả về rule
+ *  sau khi refresh (để phần insert bên dưới dùng amount mới). Idempotent: skip
+ *  nếu newAmount === rule.amount hoặc balance quá nhỏ (newAmount = 0). */
+async function refreshCompoundInterestAmount(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  rule: RecurringTransaction,
+): Promise<RecurringTransaction> {
+  if (!rule.note?.endsWith(COMPOUND_INTEREST_MARKER)) return rule;
+
+  const { data: acc } = await supabase
+    .from('accounts')
+    .select('current_balance')
+    .eq('id', rule.account_id)
+    .single();
+  if (!acc) return rule;
+
+  const newAmount = computeDailyInterest(acc.current_balance);
+  if (newAmount <= 0 || newAmount === rule.amount) return rule;
+
+  const { error } = await supabase
+    .from('recurring_transactions')
+    .update({ amount: newAmount })
+    .eq('id', rule.id);
+  if (error) throw new Error(error.message);
+
+  return { ...rule, amount: newAmount };
+}
 
 export type ActionState = {
   error?: string;
@@ -40,6 +79,8 @@ function recurringT() {
     date_invalid: m.zod_date_invalid,
     end_invalid: m.zod_recurring_end_invalid,
     note_max: m.zod_note_max,
+    interval_required: m.zod_recurring_interval_required,
+    interval_range: m.zod_recurring_interval_range,
   };
 }
 
@@ -63,8 +104,9 @@ function computeNextRunAt(
   current: string,
   frequency: RecurringFrequency,
   endDate: string | null,
+  intervalDays: number | null,
 ): string | null {
-  const next = advanceDate(current, frequency);
+  const next = advanceDate(current, frequency, intervalDays);
   if (endDate && next > endDate) return null;
   return next;
 }
@@ -88,6 +130,7 @@ export async function createRecurring(
     type: data.type,
     amount: data.amount,
     frequency: data.frequency,
+    interval_days: data.frequency === 'every_n_days' ? data.interval_days ?? null : null,
     start_date: data.start_date,
     end_date: data.end_date ?? null,
     next_run_at: initialNextRunAt(data.start_date),
@@ -116,15 +159,24 @@ export async function updateRecurring(
   const { supabase, user } = await requireUser();
   const data: RecurringInput = parsed.data;
 
-  // Verify ownership
+  // Verify ownership + fetch current state to detect rebase.
   const { data: existing } = await supabase
     .from('recurring_transactions')
-    .select('user_id')
+    .select('user_id, start_date, next_run_at, is_active')
     .eq('id', id)
     .single();
   if (!existing || existing.user_id !== user.id) {
     return { error: m.action_recurring_err_not_found() };
   }
+
+  // Nếu user kéo start_date mới và rule chưa fire (next_run_at vẫn trùng
+  // start_date cũ), rebase next_run_at theo start_date mới. Nếu đã fire rồi
+  // (next_run_at > start_date cũ) thì giữ nguyên — không tua lịch sử.
+  const startDateChanged = existing.start_date !== data.start_date;
+  const hasNotFiredYet =
+    existing.next_run_at === existing.start_date || existing.next_run_at <= existing.start_date;
+  const nextRunAt =
+    startDateChanged && hasNotFiredYet ? data.start_date : undefined;
 
   const { error } = await supabase
     .from('recurring_transactions')
@@ -134,9 +186,11 @@ export async function updateRecurring(
       type: data.type,
       amount: data.amount,
       frequency: data.frequency,
+      interval_days: data.frequency === 'every_n_days' ? data.interval_days ?? null : null,
       start_date: data.start_date,
       end_date: data.end_date ?? null,
       note: data.note ?? null,
+      ...(nextRunAt ? { next_run_at: nextRunAt } : {}),
     })
     .eq('id', id)
     .eq('user_id', user.id);
@@ -146,6 +200,7 @@ export async function updateRecurring(
   }
 
   revalidatePath('/recurring');
+  if (nextRunAt) revalidatePath('/transactions');
   return null;
 }
 
@@ -225,22 +280,30 @@ export async function generateFromRecurring(
     return { inserted: 0, nextRunAt: rule.next_run_at };
   }
 
+  // Refresh amount cho compound interest rules (4%/năm) trước khi insert.
+  const effectiveRule = await refreshCompoundInterestAmount(supabase, rule);
+
   // Insert transaction
   const { error: insertError } = await supabase.from('transactions').insert({
     user_id: user.id,
-    account_id: rule.account_id,
-    category_id: rule.category_id ?? null,
-    type: rule.type,
-    amount: Number(rule.amount),
-    occurred_at: rule.next_run_at,
-    note: rule.note
-      ? m.recurring_note_prefix({ note: rule.note })
-      : m.recurring_note_prefix({ note: rule.frequency }),
+    account_id: effectiveRule.account_id,
+    category_id: effectiveRule.category_id ?? null,
+    type: effectiveRule.type,
+    amount: Number(effectiveRule.amount),
+    occurred_at: effectiveRule.next_run_at,
+    note: effectiveRule.note
+      ? m.recurring_note_prefix({ note: effectiveRule.note })
+      : m.recurring_note_prefix({ note: effectiveRule.frequency }),
   });
   if (insertError) throw new Error(insertError.message);
 
   // Advance next_run_at
-  const nextRunAt = computeNextRunAt(rule.next_run_at, rule.frequency, rule.end_date);
+  const nextRunAt = computeNextRunAt(
+    rule.next_run_at,
+    rule.frequency,
+    rule.end_date,
+    rule.interval_days,
+  );
   const isActive = nextRunAt !== null;
   const { error: updateError } = await supabase
     .from('recurring_transactions')
@@ -277,4 +340,13 @@ export async function generateAllDue(): Promise<{ inserted: number; ruleCount: n
     inserted += res.inserted;
   }
   return { inserted, ruleCount: dueRules.length };
+}
+
+/** Wrapper cho calendar view: fetch occurrences của 1 tháng (YYYY-MM).
+ *  Validate input để chặn injection / malformed payload. */
+export async function getOccurrencesForMonth(
+  month: string,
+): Promise<Awaited<ReturnType<typeof getRecurringOccurrences>>> {
+  if (!/^\d{4}-\d{2}$/.test(month)) return [];
+  return getRecurringOccurrences(month);
 }

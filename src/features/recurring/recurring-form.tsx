@@ -10,6 +10,7 @@ import { Plus, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Dialog,
@@ -30,7 +31,7 @@ import {
 
 import { getIcon } from '@/features/categories/icon-catalog';
 import { useDialogFormState } from '@/lib/hooks/use-dialog-form-state';
-import type { Account, Category, RecurringTransaction } from '@/types/database';
+import type { Account, Category, RecurringFrequency, RecurringTransaction } from '@/types/database';
 import { createRecurring, updateRecurring, type ActionState } from './actions';
 import { FREQUENCY_LABELS, todayIso } from './frequency';
 import * as m from '@/paraglide/messages';
@@ -89,6 +90,12 @@ export function RecurringForm({
     rule?.account_id ?? accounts[0]?.id ?? '',
   );
   const [categoryId, setCategoryId] = useState<string>(rule?.category_id ?? '');
+  const [frequency, setFrequency] = useState<RecurringFrequency>(
+    rule?.frequency ?? 'monthly',
+  );
+  const [intervalDays, setIntervalDays] = useState<string>(
+    rule?.interval_days ? String(rule.interval_days) : '30',
+  );
 
   // Shake animation khi có error
   useEffect(() => {
@@ -305,24 +312,20 @@ export function RecurringForm({
                 <input
                   type="hidden"
                   name="frequency"
-                  value={rule?.frequency ?? 'monthly'}
+                  value={frequency}
                 />
                 <Select
-                  value={rule?.frequency ?? 'monthly'}
+                  value={frequency}
                   onValueChange={(v) => {
                     if (!v) return;
-                    // Update hidden input value via DOM (controlled workaround)
-                    const el = formRef.current?.elements.namedItem(
-                      'frequency',
-                    ) as HTMLInputElement | null;
-                    if (el) el.value = v;
+                    setFrequency(v as RecurringFrequency);
                   }}
                 >
                   <SelectTrigger id="frequency" className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {(['daily', 'weekly', 'monthly', 'yearly'] as const).map(
+                    {(['daily', 'weekly', 'monthly', 'yearly', 'every_n_days'] as const).map(
                       (f) => (
                         <SelectItem key={f} value={f}>
                           {FREQUENCY_LABELS[f]()}
@@ -339,15 +342,39 @@ export function RecurringForm({
               </div>
             </div>
 
+            {frequency === 'every_n_days' ? (
+              <div className="space-y-2">
+                <Label htmlFor="interval_days">{m.recurring_form_interval_label()}</Label>
+                <Input
+                  id="interval_days"
+                  name="interval_days"
+                  type="number"
+                  min={1}
+                  max={365}
+                  step={1}
+                  value={intervalDays}
+                  onChange={(e) => setIntervalDays(e.target.value)}
+                  placeholder="30"
+                  required
+                />
+                {fieldError('interval_days') ? (
+                  <p className="font-heading text-xs font-bold uppercase tracking-wide text-destructive">
+                    ⚠ {fieldError('interval_days')}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="start_date">{m.recurring_form_start_label()}</Label>
-                <Input
+                <DatePicker
                   id="start_date"
                   name="start_date"
-                  type="date"
                   defaultValue={defaultStartDate}
                   required
+                  aria-invalid={Boolean(fieldError('start_date'))}
+                  max={defaultEndDate || undefined}
                 />
                 {fieldError('start_date') ? (
                   <p className="font-heading text-xs font-bold uppercase tracking-wide text-destructive">
@@ -357,12 +384,14 @@ export function RecurringForm({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="end_date">{m.recurring_form_end_label()}</Label>
-                <Input
+                <DatePicker
                   id="end_date"
                   name="end_date"
-                  type="date"
                   defaultValue={defaultEndDate}
                   placeholder={m.recurring_end_placeholder()}
+                  clearable
+                  aria-invalid={Boolean(fieldError('end_date'))}
+                  min={defaultStartDate || undefined}
                 />
                 {fieldError('end_date') ? (
                   <p className="font-heading text-xs font-bold uppercase tracking-wide text-destructive">

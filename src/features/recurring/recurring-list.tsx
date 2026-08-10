@@ -8,7 +8,6 @@ import { useState, useTransition } from 'react';
 import {
   ArrowDownLeft,
   ArrowUpRight,
-  MoreHorizontal,
   Pause,
   Play,
   Trash2,
@@ -20,12 +19,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -34,11 +27,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
 import { getIcon } from '@/features/categories/icon-catalog';
-import type { Account, RecurringTransaction, RecurringFrequency } from '@/types/database';
+import type { RecurringTransaction, RecurringFrequency } from '@/types/database';
 import { RecurringForm } from './recurring-form';
 import {
   deleteRecurring,
@@ -87,6 +79,7 @@ const FREQUENCY_BADGE: Record<RecurringFrequency, 'default' | 'secondary'> = {
   weekly: 'default',
   monthly: 'secondary',
   yearly: 'secondary',
+  every_n_days: 'default',
 };
 
 interface RecurringListProps {
@@ -101,7 +94,7 @@ export function RecurringList({
   categories,
 }: RecurringListProps) {
   const [pending, startTransition] = useTransition();
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [pendingGenerate, setPendingGenerate] = useState<Record<string, true>>({});
 
@@ -112,10 +105,10 @@ export function RecurringList({
       try {
         await deleteRecurring(id);
         notify.success(m.recurring_delete_toast());
-        setDeleteId(null);
+        setDeletingId(null);
       } catch (e) {
         notify.error(e instanceof Error ? e.message : m.recurring_err_delete());
-        setDeleteId(null);
+        setDeletingId(null);
       }
     });
   };
@@ -286,64 +279,66 @@ export function RecurringList({
                 trigger="edit"
               />
 
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={
-                    <Button variant="ghost" size="icon-sm" aria-label={m.accounts_actions_aria()}>
-                      <MoreHorizontal className="size-4" />
-                    </Button> as React.ReactElement
-                  }
-                />
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={() => handleToggle(row.id, !row.is_active)}
-                    disabled={isBusy}
-                  >
-                    {row.is_active ? (
-                      <>
-                        <Pause className="size-4" /> {m.recurring_pause()}
-                      </>
-                    ) : (
-                      <>
-                        <Play className="size-4" /> {m.recurring_activate()}
-                      </>
-                    )}
-                  </DropdownMenuItem>
-                  <AlertDialog
-                    open={deleteId === row.id}
-                    onOpenChange={(o) => setDeleteId(o ? row.id : null)}
-                  >
-                    <AlertDialogTrigger
-                      render={
-                        <DropdownMenuItem variant="destructive">
-                          <Trash2 className="size-4" /> {m.common_delete()}
-                        </DropdownMenuItem> as React.ReactElement
-                      }
-                    />
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>{m.recurring_delete_title()}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          {m.recurring_delete_desc()}
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDelete(row.id)}
-                          disabled={pending}
-                        >
-                          {pending ? m.common_deleting() : m.common_delete()}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label={m.accounts_actions_aria()}
+                onClick={() => handleToggle(row.id, !row.is_active)}
+                disabled={isBusy}
+              >
+                {row.is_active ? (
+                  <>
+                    <Pause className="size-3.5" /> {m.recurring_pause()}
+                  </>
+                ) : (
+                  <>
+                    <Play className="size-3.5" /> {m.recurring_activate()}
+                  </>
+                )}
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label={m.accounts_actions_aria()}
+                onClick={() => setDeletingId(row.id)}
+                data-destructive="true"
+              >
+                <Trash2 className="size-3.5" /> {m.common_delete()}
+              </Button>
             </div>
           </div>
         );
       })}
+
+      {/* Delete confirm mount 1 lần ở root, không bên trong dropdown — tránh
+          Dialog unmount khi Menu đóng. */}
+      <AlertDialog
+        open={deletingId !== null}
+        onOpenChange={(o) => {
+          if (!o) setDeletingId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{m.recurring_delete_title()}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {m.recurring_delete_desc()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deletingId) handleDelete(deletingId);
+              }}
+              disabled={pending}
+            >
+              {pending ? m.common_deleting() : m.common_delete()}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

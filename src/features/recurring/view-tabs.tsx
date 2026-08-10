@@ -6,7 +6,6 @@
 
 import { useState, useTransition } from 'react';
 import { Calendar, List, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { RecurringList } from './recurring-list';
 import { RecurringCalendar, type CalendarOccurrence } from './calendar-view';
 import { cn } from '@/lib/utils';
@@ -17,6 +16,7 @@ interface ViewTabsProps {
   accounts: React.ComponentProps<typeof RecurringList>['accounts'];
   categories: React.ComponentProps<typeof RecurringList>['categories'];
   monthlyOccurrences: CalendarOccurrence[];
+  initialMonth: string;
 }
 
 export function ViewTabs({
@@ -24,6 +24,7 @@ export function ViewTabs({
   accounts,
   categories,
   monthlyOccurrences,
+  initialMonth,
 }: ViewTabsProps) {
   const [view, setView] = useState<'list' | 'calendar'>('list');
   const [pending, startTransition] = useTransition();
@@ -77,7 +78,10 @@ export function ViewTabs({
           categories={categories}
         />
       ) : (
-        <RecurringCalendar occurrences={monthlyOccurrences} />
+        <RecurringCalendar
+          initialOccurrences={monthlyOccurrences}
+          initialMonth={initialMonth}
+        />
       )}
     </div>
   );

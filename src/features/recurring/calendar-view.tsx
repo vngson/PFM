@@ -5,15 +5,17 @@
 // - Mỗi cell: số ngày + list các occurrence (income green, expense red).
 // - Ô "today" highlight; ô ngoài tháng hiển thị mờ.
 // - Click cell → modal list chi tiết (optional, skip — chưa cần).
-// Derived từ occurrences prop (server pre-compute).
+// `initialOccurrences` (server pre-compute cho tháng hiện tại) hiển thị ngay;
+// đổi tháng sẽ gọi Server Action để fetch occurrences của tháng mới.
 
-import { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { getIcon } from '@/features/categories/icon-catalog';
 import type { RecurringTransaction } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getNumberLocale } from '@/lib/format';
+import { getOccurrencesForMonth } from './actions';
 import * as m from '@/paraglide/messages';
 
 export interface CalendarOccurrence {
@@ -28,7 +30,7 @@ export interface CalendarOccurrence {
 }
 
 interface RecurringCalendarProps {
-  occurrences: CalendarOccurrence[];
+  initialOccurrences: CalendarOccurrence[];
   initialMonth?: string; // YYYY-MM
 }
 
@@ -43,12 +45,38 @@ function formatCurrency(amount: number, code: string): string {
   }).format(amount) + ' ' + code;
 }
 
-export function RecurringCalendar({ occurrences, initialMonth }: RecurringCalendarProps) {
+export function RecurringCalendar({ initialOccurrences, initialMonth }: RecurringCalendarProps) {
   const today = todayIso();
-  const [month, setMonth] = useState<string>(() => {
-    if (initialMonth && /^\d{4}-\d{2}$/.test(initialMonth)) return initialMonth;
-    return today.slice(0, 7);
-  });
+  const initial = initialMonth && /^\d{4}-\d{2}$/.test(initialMonth)
+    ? initialMonth
+    : today.slice(0, 7);
+  const [month, setMonth] = useState<string>(initial);
+  const [occurrences, setOccurrences] = useState<CalendarOccurrence[]>(initialOccurrences);
+  // Track tháng mới nhất đã fetch xong; loading = (month !== fetchedMonth)
+  // — derived trong render, không cần setState trong effect.
+  const [fetchedMonth, setFetchedMonth] = useState<string>(initial);
+
+  useEffect(() => {
+    if (month === fetchedMonth) return;
+    let cancelled = false;
+    void getOccurrencesForMonth(month)
+      .then((rows) => {
+        if (cancelled) return;
+        setOccurrences(rows);
+        setFetchedMonth(month);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        console.error('getOccurrencesForMonth failed', e);
+        setOccurrences([]);
+        setFetchedMonth(month);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [month, fetchedMonth]);
+
+  const loading = month !== fetchedMonth;
 
   const monthLabel = useMemo(() => {
     const [y, mm] = month.split('-').map(Number);
@@ -173,8 +201,9 @@ export function RecurringCalendar({ occurrences, initialMonth }: RecurringCalend
           </Button>
         </div>
 
-        <h2 className="font-heading text-lg font-bold uppercase tracking-wider">
+        <h2 className="flex items-center gap-2 font-heading text-lg font-bold uppercase tracking-wider">
           {monthLabel}
+          {loading ? <Loader2 className="size-4 animate-spin text-muted-foreground" /> : null}
         </h2>
 
         <div className="flex flex-wrap items-center gap-3 text-xs">

@@ -13,9 +13,11 @@ export type RecurringMessages = {
   date_invalid: () => string;
   end_invalid: () => string;
   note_max: () => string;
+  interval_required: () => string;
+  interval_range: () => string;
 };
 
-const frequencies = ['daily', 'weekly', 'monthly', 'yearly'] as const;
+const frequencies = ['daily', 'weekly', 'monthly', 'yearly', 'every_n_days'] as const;
 const types = ['income', 'expense'] as const; // recurring không support transfer (DB constraint)
 
 export const recurringSchema = (t: RecurringMessages) =>
@@ -36,6 +38,19 @@ export const recurringSchema = (t: RecurringMessages) =>
       })
       .transform((s) => Number(s)),
     frequency: z.enum(frequencies, { message: t.frequency_required() }),
+    interval_days: z
+      .string()
+      .optional()
+      .or(z.literal(''))
+      .transform((v) => (v ? Number(v) : undefined))
+      .pipe(
+        z
+          .number()
+          .int()
+          .min(1, t.interval_range())
+          .max(365, t.interval_range())
+          .optional(),
+      ),
     start_date: z
       .string()
       .min(1, t.start_required())
@@ -57,6 +72,12 @@ export const recurringSchema = (t: RecurringMessages) =>
       .optional()
       .or(z.literal(''))
       .transform((v) => (v ? v : undefined)),
-  });
+  })
+  .refine(
+    (data) =>
+      data.frequency !== 'every_n_days' ||
+      (data.interval_days !== undefined && data.interval_days >= 1),
+    { message: t.interval_required(), path: ['interval_days'] },
+  );
 
 export type RecurringInput = z.infer<ReturnType<typeof recurringSchema>>;

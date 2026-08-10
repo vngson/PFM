@@ -11,10 +11,16 @@ export const FREQUENCY_LABELS: Record<RecurringFrequency, () => string> = {
   weekly: () => m.recurring_freq_weekly(),
   monthly: () => m.recurring_freq_monthly(),
   yearly: () => m.recurring_freq_yearly(),
+  every_n_days: () => m.recurring_freq_every_n_days(),
 };
 
-/** Advance `from` by 1 unit of `frequency`. Returns YYYY-MM-DD. */
-export function advanceDate(from: string, frequency: RecurringFrequency): string {
+/** Advance `from` by 1 unit of `frequency`. Returns YYYY-MM-DD.
+ *  Khi frequency='every_n_days' thì `intervalDays` (1-365) bắt buộc. */
+export function advanceDate(
+  from: string,
+  frequency: RecurringFrequency,
+  intervalDays?: number | null,
+): string {
   const d = new Date(from + 'T00:00:00Z');
   switch (frequency) {
     case 'daily':
@@ -42,6 +48,11 @@ export function advanceDate(from: string, frequency: RecurringFrequency): string
       d.setUTCFullYear(year);
       d.setUTCMonth(month);
       d.setUTCDate(Math.min(day, lastDay));
+      break;
+    }
+    case 'every_n_days': {
+      const n = Math.max(1, Math.min(365, intervalDays ?? 1));
+      d.setUTCDate(d.getUTCDate() + n);
       break;
     }
   }
