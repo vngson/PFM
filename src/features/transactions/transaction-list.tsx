@@ -11,7 +11,6 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   ArrowLeftRight,
-  MoreHorizontal,
   Trash2,
   Pencil,
   Receipt,
@@ -26,12 +25,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -40,7 +33,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
 import { getIcon } from '@/features/categories/icon-catalog';
@@ -104,8 +96,9 @@ export function TransactionList({
   clearHref = '/transactions',
 }: TransactionListProps) {
   const [pending, startTransition] = useTransition();
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  // Lưu cả object (không chỉ id) để lookup không bị stale khi list re-render.
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [deletingTransaction, setDeletingTransaction] = useState<Transaction | null>(null);
 
   // Group theo ngày
   const groups = useMemo<Group[]>(() => {
@@ -126,10 +119,10 @@ export function TransactionList({
       try {
         await deleteTransaction(id);
         notify.success(m.transactions_delete_toast());
-        setDeleteId(null);
+        setDeletingTransaction(null);
       } catch (e) {
         notify.error(e instanceof Error ? e.message : m.transactions_err_delete());
-        setDeleteId(null);
+        setDeletingTransaction(null);
       }
     });
   };
@@ -215,17 +208,20 @@ export function TransactionList({
                           )}
                         </div>
                         <div className="min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                             <span className="font-heading text-sm font-bold uppercase tracking-wide">
                               {row.category?.name ?? TYPE_META[row.type].label()}
                             </span>
                             <Badge variant={meta.badge}>{meta.label()}</Badge>
+                            {row.note ? (
+                              <>
+                                <span className="text-xs text-muted-foreground">·</span>
+                                <span className="truncate text-xs italic text-muted-foreground">
+                                  {row.note}
+                                </span>
+                              </>
+                            ) : null}
                           </div>
-                          {row.note ? (
-                            <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                              {row.note}
-                            </p>
-                          ) : null}
                           <p className="mt-0.5 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                             <span
                               className="inline-flex size-3 shrink-0 items-center justify-center border border-border"
@@ -241,50 +237,26 @@ export function TransactionList({
                     <TableCell className={`text-right font-heading text-base font-bold ${meta.color}`}>
                       {sign} {formatCurrency(row.amount, row.account.currency_code)}
                     </TableCell>
-                    <TableCell className="w-12">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          render={
-                            <Button variant="ghost" size="icon-sm" aria-label={m.accounts_actions_aria()}>
-                              <MoreHorizontal className="size-4" />
-                            </Button> as React.ReactElement
-                          }
-                        />
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onSelect={() => setEditingId(row.id)}>
-                            <Pencil className="size-4" /> {m.common_edit()}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onSelect={() => setDeleteId(row.id)}
-                          >
-                            <Trash2 className="size-4" /> {m.common_delete()}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-
-                      <AlertDialog
-                        open={deleteId === row.id}
-                        onOpenChange={(o) => setDeleteId(o ? row.id : null)}
-                      >
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>{m.transactions_delete_title()}</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              {m.transactions_delete_desc()}
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDelete(row.id)}
-                              disabled={pending}
-                            >
-                              {pending ? m.common_deleting() : m.common_delete()}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                    <TableCell className="w-28 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          aria-label={m.accounts_actions_aria()}
+                          onClick={() => setEditingTransaction(row)}
+                        >
+                          <Pencil className="size-3.5" /> {m.common_edit()}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          aria-label={m.accounts_actions_aria()}
+                          onClick={() => setDeletingTransaction(row)}
+                          data-destructive="true"
+                        >
+                          <Trash2 className="size-3.5" /> {m.common_delete()}
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -295,25 +267,45 @@ export function TransactionList({
       ))}
 
       {/* Edit form mở qua state lifting */}
-      {editingId
-        ? (() => {
-            const editRow = transactions.find((t) => t.id === editingId);
-            if (!editRow) return null;
-            return (
-              <TransactionForm
-                key={editRow.id}
-                transaction={editRow}
-                accounts={accounts}
-                categories={categories}
-                trigger="hidden"
-                open
-                onOpenChange={(o) => {
-                  if (!o) setEditingId(null);
-                }}
-              />
-            );
-          })()
-        : null}
+      <TransactionForm
+        key={editingTransaction?.id ?? 'closed'}
+        transaction={editingTransaction ?? undefined}
+        accounts={accounts}
+        categories={categories}
+        trigger="hidden"
+        open={editingTransaction !== null}
+        onOpenChange={(o) => {
+          if (!o) setEditingTransaction(null);
+        }}
+      />
+
+      {/* Delete confirm — render 1 lần ở root để tránh bị Base UI Menu đóng gây unmount */}
+      <AlertDialog
+        open={deletingTransaction !== null}
+        onOpenChange={(o) => {
+          if (!o) setDeletingTransaction(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{m.transactions_delete_title()}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {m.transactions_delete_desc()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deletingTransaction) handleDelete(deletingTransaction.id);
+              }}
+              disabled={pending}
+            >
+              {pending ? m.common_deleting() : m.common_delete()}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

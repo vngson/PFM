@@ -51,16 +51,16 @@ function formDataToObject(fd: FormData): Record<string, string> {
 }
 
 /** Lấy list account active của user — dùng cho dropdown trong form và tên hiển thị trong list. */
-export async function listActiveAccounts(): Promise<Pick<Account, 'id' | 'name' | 'currency_code' | 'color' | 'icon_name'>[]> {
+export async function listActiveAccounts(): Promise<Pick<Account, 'id' | 'name' | 'type' | 'currency_code' | 'color' | 'icon_name'>[]> {
   const { supabase, user } = await requireUser();
   const { data, error } = await supabase
     .from('accounts')
-    .select('id, name, currency_code, color, icon_name')
+    .select('id, name, type, currency_code, color, icon_name')
     .eq('user_id', user.id)
     .eq('is_archived', false)
     .order('name', { ascending: true });
   if (error) throw new Error(error.message);
-  return (data ?? []) as Pick<Account, 'id' | 'name' | 'currency_code' | 'color' | 'icon_name'>[];
+  return (data ?? []) as Pick<Account, 'id' | 'name' | 'type' | 'currency_code' | 'color' | 'icon_name'>[];
 }
 
 export async function createTransaction(

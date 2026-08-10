@@ -11,6 +11,9 @@ import {
   listCategoriesForSelect,
   listTransactions,
 } from '@/features/transactions/actions';
+import { listAtmFeeCategories } from '@/features/withdrawal/actions';
+import { WithdrawalForm } from '@/features/withdrawal/withdrawal-form';
+import { TransferForm } from '@/features/transfer/transfer-form';
 import type { Transaction } from '@/types/database';
 import { TransactionForm } from '@/features/transactions/transaction-form';
 import { TransactionList } from '@/features/transactions/transaction-list';
@@ -51,7 +54,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
   const before = sp.before && /^\d{4}-\d{2}-\d{2}$/.test(sp.before) ? sp.before : undefined;
 
   // Parallel fetch: summary (luôn lấy theo month) + accounts + categories + transactions (filter)
-  const [summary, accounts, categories, txnResult] = await Promise.all([
+  const [summary, accounts, categories, txnResult, atmCategories] = await Promise.all([
     getMonthSummary(month),
     listActiveAccounts(),
     listCategoriesForSelect(),
@@ -62,6 +65,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
       before,
       limit: PAGE_SIZE,
     }),
+    listAtmFeeCategories(),
   ]);
 
   // Cursor cho load-more: occurred_at của row cuối cùng (cũ nhất trong trang hiện tại)
@@ -90,6 +94,8 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
           trigger="create"
         />
         <div className="flex items-center gap-2">
+          <WithdrawalForm accounts={accounts} atmCategories={atmCategories} />
+          <TransferForm accounts={accounts} />
           <ExportButton action={exportTransactionsCSV} />
         </div>
       </div>

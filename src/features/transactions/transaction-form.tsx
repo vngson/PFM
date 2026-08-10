@@ -10,6 +10,7 @@ import { Plus, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Dialog,
@@ -330,12 +331,12 @@ export function TransactionForm({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="occurred_at">{m.transactions_form_date_label()}</Label>
-                <Input
+                <DatePicker
                   id="occurred_at"
                   name="occurred_at"
-                  type="date"
                   defaultValue={defaultDate}
                   required
+                  aria-invalid={Boolean(fieldError('occurred_at'))}
                 />
                 {fieldError('occurred_at') ? (
                   <p className="font-heading text-xs font-bold uppercase tracking-wide text-destructive">
