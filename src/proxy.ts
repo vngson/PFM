@@ -21,7 +21,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
 import { paraglideMiddleware } from '@/paraglide/server';
-import { baseLocale, locales, type Locale } from '@/paraglide/runtime';
+import { locales, type Locale } from '@/paraglide/runtime';
+
+/**
+ * Resolve locale ưu tiên khi URL không có prefix:
+ *   1. Cookie PARAGLIDE_LOCALE (paraglide đã set sau mỗi request trước)
+ *   2. First visit (không có cookie) → 'en' mặc định
+ *
+ * Bỏ qua cookie locales khác supported (vd "fr") → fallback về 'en'.
+ * Apply ở đây vì async local storage chưa được set ở đầu proxy.
+ */
+function resolvePreferredLocale(request: NextRequest): Locale {
+  const supported = locales as readonly string[];
+
+  const cookieLocale = request.cookies.get('PARAGLIDE_LOCALE')?.value;
+  if (cookieLocale && supported.includes(cookieLocale)) {
+    return cookieLocale as Locale;
+  }
+
+  return 'en';
+}
 
 export async function proxy(request: NextRequest) {
   // Detect locale từ URL prefix. Paraglide URL strategy cũng detect, nhưng ta
@@ -33,7 +52,37 @@ export async function proxy(request: NextRequest) {
   )
     ? (segment as Locale)
     : undefined;
-  const localeValue: Locale = localeFromUrl ?? (baseLocale as Locale);
+
+  // Nếu URL không có locale prefix (vd /dashboard, /transactions, /login) →
+  // redirect sang /<locale>/<path>. App tree chỉ có /[locale]/* nên nếu KHÔNG
+  // redirect, Next.js sẽ 404 mọi request kiểu /dashboard. Redirect đảm bảo route
+  // hợp lệ (vd /en/dashboard match /[locale]/dashboard/page.tsx) còn route lạ
+  // (vd /en/foo-bar) sẽ 404 tự nhiên ở Next sau khi paraglide de-localize.
+  //
+  // Locale ưu tiên: cookie PARAGLIDE_LOCALE > 'en' (first visit mặc định).
+  // First visit (chưa có cookie) → set cookie 'en' ngay trên response redirect
+  // để request kế tiếp browser gửi kèm → resolvePreferredLocale trả 'en' luôn,
+  // không phải parse Accept-Language.
+  //
+  // Edge case: nếu user gõ /vi/... đã có prefix → không redirect (đã có locale).
+  if (!localeFromUrl) {
+    const preferred = resolvePreferredLocale(request);
+    const localizedPath = `/${preferred}${url.pathname === '/' ? '' : url.pathname}${url.search}`;
+    const redirectResponse = NextResponse.redirect(
+      new URL(localizedPath, request.url),
+    );
+    // Set cookie để browser nhớ locale lần sau (chỉ cần set khi first visit).
+    if (!request.cookies.get('PARAGLIDE_LOCALE')) {
+      redirectResponse.cookies.set('PARAGLIDE_LOCALE', preferred, {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 400, // ~13 months, match paraglide default
+        sameSite: 'lax',
+      });
+    }
+    return redirectResponse;
+  }
+
+  const localeValue: Locale = localeFromUrl;
 
   // Inject header x-paraglide-locale để root layout.tsx đọc trong cùng
   // request — URL vẫn có prefix /en/ ở đây.
