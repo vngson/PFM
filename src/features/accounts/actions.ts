@@ -192,3 +192,16 @@ export async function listAccounts(includeArchived = false): Promise<Account[]> 
   if (error) throw new Error(error.message);
   return (data ?? []) as Account[];
 }
+
+/** Lấy 1 account theo id (server-only). Trả null nếu không thuộc user hoặc đã xoá. */
+export async function getAccountById(id: string): Promise<Account | null> {
+  const { supabase, user } = await requireUser();
+  const { data, error } = await supabase
+    .from('accounts')
+    .select('*')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data as Account | null) ?? null;
+}

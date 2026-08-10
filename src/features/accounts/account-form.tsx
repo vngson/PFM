@@ -55,9 +55,18 @@ const initialState: ActionState = null;
 interface AccountFormProps {
   account?: Account;
   trigger?: 'create' | 'edit';
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 }
 
-export function AccountForm({ account, trigger = 'create' }: AccountFormProps) {
+export function AccountForm({
+  account,
+  trigger = 'create',
+  open: openProp,
+  onOpenChange: onOpenChangeProp,
+  hideTrigger = false,
+}: AccountFormProps) {
   const isEdit = !!account;
   const action = isEdit
     ? updateAccount.bind(null, account!.id)
@@ -67,7 +76,13 @@ export function AccountForm({ account, trigger = 'create' }: AccountFormProps) {
     initialState,
   );
 
-  const [open, setOpen] = useState(false);
+  const [openInternal, setOpenInternal] = useState(false);
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? openProp : openInternal;
+  const setOpen = (v: boolean) => {
+    if (onOpenChangeProp) onOpenChangeProp(v);
+    if (!isControlled) setOpenInternal(v);
+  };
   const [type, setType] = useState<Account['type']>(account?.type ?? 'cash');
   const [color, setColor] = useState<string>(account?.color ?? '#3b82f6');
   const [iconName, setIconName] = useState<string>(account?.icon_name ?? '');
@@ -92,7 +107,7 @@ export function AccountForm({ account, trigger = 'create' }: AccountFormProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={triggerButton as React.ReactElement} />
+      {hideTrigger ? null : <DialogTrigger render={triggerButton as React.ReactElement} />}
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
