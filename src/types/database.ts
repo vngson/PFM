@@ -11,7 +11,12 @@ export type AccountType =
   | 'investment'
   | 'other';
 export type TransactionType = 'income' | 'expense' | 'transfer';
-export type RecurringFrequency = 'daily' | 'weekly' | 'monthly' | 'yearly';
+export type RecurringFrequency =
+  | 'daily'
+  | 'weekly'
+  | 'monthly'
+  | 'yearly'
+  | 'every_n_days';
 
 export interface Profile {
   id: string;
@@ -33,6 +38,8 @@ export interface Category {
   color: string;
   is_default: boolean;
   sort_order: number;
+  /** Phí rút tiền mặc định (VND) cho category phí ATM. Null = không phải category phí ATM. */
+  withdrawal_fee: number | null;
   created_at: string;
 }
 
@@ -82,6 +89,7 @@ export interface RecurringTransaction {
   type: TransactionType;
   amount: number;
   frequency: RecurringFrequency;
+  interval_days: number | null;
   start_date: string;
   end_date: string | null;
   next_run_at: string;

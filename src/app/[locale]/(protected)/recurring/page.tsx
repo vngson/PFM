@@ -106,6 +106,7 @@ export default async function RecurringPage() {
           accounts={accounts}
           categories={categories}
           monthlyOccurrences={occurrences}
+          initialMonth={month}
         />
       )}
     </div>
