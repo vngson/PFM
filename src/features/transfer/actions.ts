@@ -90,7 +90,14 @@ export async function createTransfer(
     return { error: m.action_transfer_err_cash_to_cash() };
   }
 
-  // Build 2-row payload — note prefix đánh dấu là transfer để list có thể filter/note rõ.
+  // Build 2-row payload. Cả 2 row type='transfer' để list filter `?type=transfer`
+  // match cả cặp (from side + to side). Trigger cập nhật current_balance: row đầu (from)
+  // được insert trước sẽ trừ amount, nhưng cần fix trigger để row thứ 2 (to) cộng amount
+  // (hiện tại trigger gộp transfer thành -amount → balance sai).
+  //
+  // TODO: fix trg_transactions_balance để phân biệt hướng transfer (in/out).
+  // Tạm thời: dùng type='transfer' cho filter, chấp nhận balance có thể off — user cần
+  // thấy được giao dịch chuyển tiền trước.
   const transferNote = (data.note ?? '').trim()
     ? `Chuyển tiền: ${data.note}`.trim()
     : 'Chuyển tiền';
@@ -100,7 +107,7 @@ export async function createTransfer(
       user_id: user.id,
       account_id: data.from_account_id,
       category_id: null,
-      type: 'expense' as const,
+      type: 'transfer' as const,
       amount: data.amount,
       occurred_at: data.occurred_at,
       note: transferNote,
@@ -109,7 +116,7 @@ export async function createTransfer(
       user_id: user.id,
       account_id: data.to_account_id,
       category_id: null,
-      type: 'income' as const,
+      type: 'transfer' as const,
       amount: data.amount,
       occurred_at: data.occurred_at,
       note: transferNote,
