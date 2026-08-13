@@ -294,7 +294,7 @@
   }
   [data-sonner-toast][data-type="success"] [data-sonner-toast-icon] {
     background-color: var(--cn-toast-success-border) !important;
-    color: var(--destructive-foreground) !important;
+    color: #ffffff !important;
   }
   [data-sonner-toast][data-type="error"] {
     background-color: var(--cn-toast-error-bg) !important;
@@ -303,7 +303,7 @@
   }
   [data-sonner-toast][data-type="error"] [data-sonner-toast-icon] {
     background-color: var(--cn-toast-error-border) !important;
-    color: var(--destructive-foreground) !important;
+    color: #ffffff !important;
   }
   [data-sonner-toast][data-type="warning"] {
     background-color: var(--cn-toast-warning-bg) !important;
@@ -312,7 +312,7 @@
   }
   [data-sonner-toast][data-type="warning"] [data-sonner-toast-icon] {
     background-color: var(--cn-toast-warning-border) !important;
-    color: var(--destructive-foreground) !important;
+    color: #000000 !important;
   }
   [data-sonner-toast][data-type="info"] {
     background-color: var(--cn-toast-info-bg) !important;
@@ -321,7 +321,7 @@
   }
   [data-sonner-toast][data-type="info"] [data-sonner-toast-icon] {
     background-color: var(--cn-toast-info-border) !important;
-    color: var(--destructive-foreground) !important;
+    color: #ffffff !important;
   }
 }
 
