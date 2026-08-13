@@ -25,6 +25,8 @@ export interface Profile {
   avatar_url: string | null;
   currency_code: string;
   locale: string;
+  deleted_at: string | null;
+  scheduled_purge_at: string | null;
   created_at: string;
   updated_at: string;
 }
