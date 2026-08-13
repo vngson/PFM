@@ -30,7 +30,8 @@ export async function requestAccountDeletion(): Promise<AccountActionState> {
     .eq('id', user.id);
 
   if (error) {
-    return { error: error.message };
+    console.error('[account:requestDeletion]', error.message);
+    return { error: m.account_deleted_restore_failed() };
   }
 
   await supabase.auth.signOut();

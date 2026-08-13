@@ -118,7 +118,23 @@ Vào **Supabase Dashboard → SQL Editor**, chạy theo thứ tự:
 
 Chi tiết xem [supabase/README.md](./supabase/README.md).
 
-### 5. Run
+### 5. Configure Supabase Dashboard (OTP email template)
+
+> **⚠ Bắt buộc với signup flow mới (OTP 8 ký tự).** Bỏ qua bước này thì email sẽ chứa link "Confirm signup" thay vì mã OTP, user bấm vào sẽ thấy `access_denied / otp_expired` thay vì mã 8 ký tự.
+
+Vào **Supabase Dashboard → Authentication → Sign In/Up → Email** (hoặc **Templates**):
+
+1. **Site URL** đặt về `http://localhost:3456` (dev) hoặc domain production. Không bao gồm path — Supabase append `/{locale}/auth/callback` cho email link.
+2. **Redirect URLs** thêm đầy đủ:
+   - `http://localhost:3456`
+   - `http://localhost:3456/*` (wildcard cho mọi path)
+   - Domain production tương ứng.
+3. **Email template cho OTP 8 ký tự**: Vào **Email Templates**, tạo 1 custom template mới với subject `Your sign-in code` (hoặc đặt lại "Magic Link" template thành OTP variant). Đặt `{{ .ConfirmationURL }}` thành `{{ .Token }}` để gửi OTP thay vì link.
+4. **Bật "Email OTP" provider** trong **Providers → Email** — bật cả "Confirm email" và "Magic Link" để cover cả 2 flow.
+
+**Verify sau khi config:** Đăng ký email test → nhận được mã 8 ký tự alphanumeric (a-z0-9) trong email (không phải link). Nếu vẫn nhận được link → check lại **Site URL** + **Redirect URLs** (phải bao gồm `http://localhost:3456` đúng cổng mà dev server đang chạy).
+
+### 6. Run
 
 ```bash
 pnpm dev
