@@ -31,6 +31,7 @@ import {
 
 import { getIcon } from '@/features/categories/icon-catalog';
 import { useDialogFormState } from '@/lib/hooks/use-dialog-form-state';
+import { notify } from '@/lib/toast';
 import type { Account, Category, RecurringFrequency, RecurringTransaction } from '@/types/database';
 import { createRecurring, updateRecurring, type ActionState } from './actions';
 import { FREQUENCY_LABELS, todayIso } from './frequency';
@@ -122,10 +123,15 @@ export function RecurringForm({
     }
   }, [type, filteredCategories, categoryId]);
 
-  // Auto-close dialog khi submit thành công
+  // Auto-close dialog + toast khi submit thành công
   useEffect(() => {
-    if (closeOnSuccess) setOpen(false);
-  }, [closeOnSuccess]);
+    if (closeOnSuccess) {
+      queueMicrotask(() => {
+        setOpen(false);
+        notify.success(isEdit ? m.recurring_update_toast() : m.recurring_create_toast());
+      });
+    }
+  }, [closeOnSuccess, isEdit]);
 
   const defaultStartDate = useMemo(() => {
     if (rule?.start_date) return rule.start_date.slice(0, 10);

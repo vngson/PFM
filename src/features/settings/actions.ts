@@ -73,6 +73,11 @@ export async function updateProfile(
     if (error.code === '23505') {
       return { error: m.auth_err_username_taken() };
     }
+    // 23514 = check_violation (regex profile_username_format).
+    // Trước đây leak raw Postgres message — giờ map về i18n key chung.
+    if (error.code === '23514') {
+      return { error: m.auth_err_username_format() };
+    }
     return { error: error.message };
   }
 
@@ -119,7 +124,8 @@ export async function changePassword(
 
   const { error } = await supabase.auth.updateUser({ password: next });
   if (error) {
-    return { error: error.message };
+    console.error('[settings:changePassword]', error.message);
+    return { error: m.auth_err_invalid_credentials() };
   }
 
   return { success: m.settings_password_changed() };
@@ -156,7 +162,8 @@ export async function signOutOtherSessions(): Promise<SettingsActionState> {
   const { supabase } = await requireUser();
   const { error } = await supabase.auth.signOut({ scope: 'others' });
   if (error) {
-    return { error: error.message };
+    console.error('[settings:signOutOther]', error.message);
+    return { error: m.common_save_failed() };
   }
   revalidatePath('/settings');
   return { success: m.settings_signout_other_success() };

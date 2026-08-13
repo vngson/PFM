@@ -95,13 +95,11 @@ export function QuickAddForm({ accounts, categories }: QuickAddFormProps) {
   }, [open, accounts, filteredCategories]);
 
   // Đóng + toast khi save thành công (state về null + không có error)
+  // Field errors đã render inline dưới input → chỉ toast khi có top-level error.
   useEffect(() => {
     if (!state) return;
     if (state.error) {
       notify.error(state.error);
-    } else if (state.fieldErrors) {
-      const firstErr = Object.values(state.fieldErrors).flat()[0];
-      if (firstErr) notify.error(firstErr);
     }
   }, [state]);
 

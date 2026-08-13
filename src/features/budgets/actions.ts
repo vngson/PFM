@@ -69,7 +69,11 @@ export async function createBudget(
     if (error.code === '23505') {
       return { error: m.action_budget_err_duplicate() };
     }
-    return { error: error.message };
+    if (error.code === '23514') {
+      return { error: m.action_err_check_violation() };
+    }
+    console.error('[budgets:create]', error.message);
+    return { error: m.common_save_failed() };
   }
 
   revalidatePath('/budgets');
@@ -109,7 +113,16 @@ export async function updateBudget(
     .eq('id', id)
     .eq('user_id', user.id);
 
-  if (error) return { error: error.message };
+  if (error) {
+    if (error.code === '23505') {
+      return { error: m.action_budget_err_duplicate() };
+    }
+    if (error.code === '23514') {
+      return { error: m.action_err_check_violation() };
+    }
+    console.error('[budgets:update]', error.message);
+    return { error: m.common_save_failed() };
+  }
 
   revalidatePath('/budgets');
   return null;

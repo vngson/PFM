@@ -139,7 +139,11 @@ export async function createRecurring(
   });
 
   if (error) {
-    return { error: error.message };
+    if (error.code === '23514') {
+      return { error: m.action_err_check_violation() };
+    }
+    console.error('[recurring:create]', error.message);
+    return { error: m.common_save_failed() };
   }
 
   revalidatePath('/recurring');
@@ -196,7 +200,11 @@ export async function updateRecurring(
     .eq('user_id', user.id);
 
   if (error) {
-    return { error: error.message };
+    if (error.code === '23514') {
+      return { error: m.action_err_check_violation() };
+    }
+    console.error('[recurring:update]', error.message);
+    return { error: m.common_save_failed() };
   }
 
   revalidatePath('/recurring');

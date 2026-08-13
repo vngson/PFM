@@ -32,6 +32,7 @@ import {
 import { COLOR_CATALOG } from '@/features/categories/color-catalog';
 import { ICON_CATALOG } from '@/features/categories/icon-catalog';
 import { useDialogFormState } from '@/lib/hooks/use-dialog-form-state';
+import { notify } from '@/lib/toast';
 import type { Account } from '@/types/database';
 import * as m from '@/paraglide/messages';
 import { createAccount, updateAccount, type ActionState } from './actions';
@@ -90,10 +91,15 @@ export function AccountForm({
   const fieldError = (key: string): string | undefined =>
     state?.fieldErrors?.[key]?.[0];
 
-  // Auto-close dialog khi submit thành công (useDialogFormState detect pending flip + null state).
+  // Auto-close dialog + toast khi submit thành công
   useEffect(() => {
-    if (closeOnSuccess) setOpen(false);
-  }, [closeOnSuccess]);
+    if (closeOnSuccess) {
+      queueMicrotask(() => {
+        setOpen(false);
+        notify.success(isEdit ? m.accounts_update_toast() : m.accounts_create_toast());
+      });
+    }
+  }, [closeOnSuccess, isEdit]);
 
   const triggerButton = isEdit ? (
     <Button variant="ghost" size="sm" className="gap-1.5">

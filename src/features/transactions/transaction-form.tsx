@@ -31,6 +31,7 @@ import {
 
 import { getIcon } from '@/features/categories/icon-catalog';
 import { useDialogFormState } from '@/lib/hooks/use-dialog-form-state';
+import { notify } from '@/lib/toast';
 import type { Account, Category, Transaction } from '@/types/database';
 import {
   createTransaction,
@@ -116,10 +117,15 @@ export function TransactionForm({
     }
   }, [state]);
 
-  // Auto-close dialog khi submit thành công
+  // Auto-close dialog + toast khi submit thành công
   useEffect(() => {
-    if (closeOnSuccess) setOpen(false);
-  }, [closeOnSuccess]);
+    if (closeOnSuccess) {
+      queueMicrotask(() => {
+        setOpen(false);
+        notify.success(isEdit ? m.transactions_update_toast() : m.transactions_create_toast());
+      });
+    }
+  }, [closeOnSuccess, isEdit]);
 
   // Filter category theo type (transfer không cần)
   const filteredCategories = useMemo(() => {

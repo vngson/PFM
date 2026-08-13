@@ -336,7 +336,11 @@ export async function createWithdrawal(
   // 1 round-trip insert toàn bộ row → trigger tự cập nhật current_balance atomic.
   const { error: insErr } = await supabase.from('transactions').insert(rows);
   if (insErr) {
-    return { error: insErr.message };
+    if (insErr.code === '23514') {
+      return { error: m.action_err_check_violation() };
+    }
+    console.error('[withdrawal:create]', insErr.message);
+    return { error: m.common_save_failed() };
   }
 
   revalidatePath('/transactions');

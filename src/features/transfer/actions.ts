@@ -125,7 +125,11 @@ export async function createTransfer(
 
   const { error: insErr } = await supabase.from('transactions').insert(rows);
   if (insErr) {
-    return { error: insErr.message };
+    if (insErr.code === '23514') {
+      return { error: m.action_err_check_violation() };
+    }
+    console.error('[transfer:create]', insErr.message);
+    return { error: m.common_save_failed() };
   }
 
   revalidatePath('/transactions');

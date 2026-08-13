@@ -4,12 +4,12 @@
 // Submit qua Server Action, dùng useActionState để hiển thị lỗi/thành công.
 
 import { useActionState } from 'react';
-import { Save, User } from 'lucide-react';
+import { Save, User, CheckCircle2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import {
   Select,
   SelectContent,
@@ -58,7 +58,9 @@ export function ProfileForm({ defaultValues }: ProfileFormProps) {
         </Alert>
       ) : null}
       {state?.success ? (
-        <Alert>
+        <Alert variant="success">
+          <CheckCircle2 className="size-5" />
+          <AlertTitle>{m.common_done()}</AlertTitle>
           <AlertDescription>{state.success}</AlertDescription>
         </Alert>
       ) : null}

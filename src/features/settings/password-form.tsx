@@ -3,13 +3,13 @@
 // PasswordForm: đổi mật khẩu (yêu cầu current + next + confirm).
 
 import { useActionState } from 'react';
-import { KeyRound, Eye, EyeOff } from 'lucide-react';
+import { KeyRound, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 import { changePassword, type SettingsActionState } from './actions';
 import * as m from '@/paraglide/messages';
@@ -34,7 +34,9 @@ export function PasswordForm() {
         </Alert>
       ) : null}
       {state?.success ? (
-        <Alert>
+        <Alert variant="success">
+          <CheckCircle2 className="size-5" />
+          <AlertTitle>{m.common_done()}</AlertTitle>
           <AlertDescription>{state.success}</AlertDescription>
         </Alert>
       ) : null}

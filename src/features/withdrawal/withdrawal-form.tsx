@@ -48,6 +48,7 @@ import {
 
 import { getIcon } from '@/features/categories/icon-catalog';
 import { useDialogFormState } from '@/lib/hooks/use-dialog-form-state';
+import { notify } from '@/lib/toast';
 import type { Account, Category } from '@/types/database';
 import { createWithdrawal, type ActionState } from './actions';
 import * as m from '@/paraglide/messages';
@@ -161,7 +162,12 @@ export function WithdrawalForm({
   // của useActionState. KHÔNG dùng derived isOpen = open && !closeOnSuccess — setTimeout(0) reset
   // của hook sẽ ngay lập tức đảo closeOnSuccess về false, làm isOpen flip true → dialog bật lại.
   useEffect(() => {
-    if (closeOnSuccess) setOpen(false);
+    if (closeOnSuccess) {
+      queueMicrotask(() => {
+        setOpen(false);
+        notify.success(m.withdrawal_create_toast());
+      });
+    }
   }, [closeOnSuccess]);
 
   // Khi user đổi category → fill fee theo withdrawal_fee (nếu có).

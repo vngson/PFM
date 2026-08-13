@@ -86,6 +86,8 @@ interface TransactionListProps {
 interface Group {
   date: string;
   rows: Row[];
+  income: number;
+  expense: number;
 }
 
 export function TransactionList({
@@ -100,18 +102,26 @@ export function TransactionList({
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [deletingTransaction, setDeletingTransaction] = useState<Transaction | null>(null);
 
-  // Group theo ngày
+  // Group theo ngày + tính tổng thu/chi theo ngày để hiển thị trên header.
+  // Transfer không tính vào income/expense (đã là dòng trung chuyển giữa 2 account của cùng user).
   const groups = useMemo<Group[]>(() => {
-    const map = new Map<string, Row[]>();
+    const map = new Map<string, { rows: Row[]; income: number; expense: number }>();
     for (const row of transactions) {
       const d = row.occurred_at.slice(0, 10);
-      const arr = map.get(d);
-      if (arr) arr.push(row);
-      else map.set(d, [row]);
+      const bucket = map.get(d) ?? { rows: [], income: 0, expense: 0 };
+      bucket.rows.push(row);
+      if (row.type === 'income') bucket.income += Number(row.amount);
+      else if (row.type === 'expense') bucket.expense += Number(row.amount);
+      map.set(d, bucket);
     }
     return Array.from(map.entries())
       .sort(([a], [b]) => (a < b ? 1 : -1))
-      .map(([date, rows]) => ({ date, rows }));
+      .map(([date, bucket]) => ({
+        date,
+        rows: bucket.rows,
+        income: bucket.income,
+        expense: bucket.expense,
+      }));
   }, [transactions]);
 
   const handleDelete = (id: string) => {
@@ -174,7 +184,11 @@ export function TransactionList({
               {dateFmt.format(new Date(group.date))}
             </span>
             <span className="font-mono text-xs text-muted-foreground">
-              {m.transactions_count_in_group({ count: group.rows.length })}
+              {m.transactions_group_day_summary({
+                count: group.rows.length,
+                income: formatCurrency(group.income, 'VND'),
+                expense: formatCurrency(group.expense, 'VND'),
+              })}
             </span>
           </div>
           <Table>

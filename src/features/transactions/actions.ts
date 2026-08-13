@@ -86,7 +86,11 @@ export async function createTransaction(
   });
 
   if (error) {
-    return { error: error.message };
+    if (error.code === '23514') {
+      return { error: m.action_err_check_violation() };
+    }
+    console.error('[transactions:create]', error.message);
+    return { error: m.common_save_failed() };
   }
 
   revalidatePath('/transactions');
@@ -132,7 +136,11 @@ export async function updateTransaction(
     .eq('user_id', user.id);
 
   if (error) {
-    return { error: error.message };
+    if (error.code === '23514') {
+      return { error: m.action_err_check_violation() };
+    }
+    console.error('[transactions:update]', error.message);
+    return { error: m.common_save_failed() };
   }
 
   revalidatePath('/transactions');

@@ -35,6 +35,7 @@ import {
 
 import { getIcon } from '@/features/categories/icon-catalog';
 import { useDialogFormState } from '@/lib/hooks/use-dialog-form-state';
+import { notify } from '@/lib/toast';
 import type { Account } from '@/types/database';
 import { createTransfer, type ActionState } from './actions';
 import * as m from '@/paraglide/messages';
@@ -91,7 +92,12 @@ export function TransferForm({ accounts }: TransferFormProps) {
   // của useActionState. KHÔNG dùng derived isOpen = open && !closeOnSuccess — setTimeout(0) reset
   // của hook sẽ ngay lập tức đảo closeOnSuccess về false, làm isOpen flip true → dialog bật lại.
   useEffect(() => {
-    if (closeOnSuccess) setOpen(false);
+    if (closeOnSuccess) {
+      queueMicrotask(() => {
+        setOpen(false);
+        notify.success(m.transfer_create_toast());
+      });
+    }
   }, [closeOnSuccess]);
 
   // Shake khi có error (giống các form khác trong codebase).

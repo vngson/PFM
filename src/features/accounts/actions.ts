@@ -74,7 +74,11 @@ export async function createAccount(
     if (error.code === '23505') {
       return { error: m.action_account_err_duplicate_create() };
     }
-    return { error: error.message };
+    if (error.code === '23514') {
+      return { error: m.action_err_check_violation() };
+    }
+    console.error('[accounts:create]', error.message);
+    return { error: m.common_save_failed() };
   }
 
   revalidatePath('/accounts');
@@ -130,7 +134,11 @@ export async function updateAccount(
     if (error.code === '23505') {
       return { error: m.action_account_err_duplicate_update() };
     }
-    return { error: error.message };
+    if (error.code === '23514') {
+      return { error: m.action_err_check_violation() };
+    }
+    console.error('[accounts:update]', error.message);
+    return { error: m.common_save_failed() };
   }
 
   revalidatePath('/accounts');

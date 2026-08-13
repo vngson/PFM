@@ -32,6 +32,7 @@ import {
 import { COLOR_CATALOG } from './color-catalog';
 import { ICON_CATALOG, getIcon } from './icon-catalog';
 import { useDialogFormState } from '@/lib/hooks/use-dialog-form-state';
+import { notify } from '@/lib/toast';
 import type { Category } from '@/types/database';
 import { createCategory, updateCategory, type ActionState } from './actions';
 import * as m from '@/paraglide/messages';
@@ -90,10 +91,15 @@ export function CategoryForm({
     }
   }, [open, category]);
 
-  // Auto-close dialog khi submit thành công
+  // Auto-close dialog + toast khi submit thành công
   useEffect(() => {
-    if (closeOnSuccess) setOpen(false);
-  }, [closeOnSuccess]);
+    if (closeOnSuccess) {
+      queueMicrotask(() => {
+        setOpen(false);
+        notify.success(isEdit ? m.categories_update_toast() : m.categories_create_toast());
+      });
+    }
+  }, [closeOnSuccess, isEdit]);
 
   const fieldError = (key: string): string | undefined =>
     state?.fieldErrors?.[key]?.[0];
