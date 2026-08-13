@@ -103,15 +103,23 @@ export function LoginForm() {
           <Button type="submit" className="w-full" size="lg" disabled={pending}>
             {pending ? m.auth_login_pending() : m.auth_login_submit()}
           </Button>
-          <p className="text-sm font-medium text-muted-foreground">
-            {m.auth_login_no_account()}{' '}
+          <div className="flex w-full items-center justify-between gap-2 text-sm font-medium text-muted-foreground">
             <Link
-              href={buildLocalizedHref("/signup", getLocale())}
-              className="font-bold text-foreground underline decoration-2 underline-offset-4 transition-colors hover:text-primary"
+              href={buildLocalizedHref("/forgot-password", getLocale())}
+              className="text-foreground underline decoration-2 underline-offset-4 transition-colors hover:text-primary"
             >
-              {m.auth_login_signup_link()}
+              {m.auth_login_forgot_link()}
             </Link>
-          </p>
+            <span>
+              {m.auth_login_no_account()}{' '}
+              <Link
+                href={buildLocalizedHref("/signup", getLocale())}
+                className="font-bold text-foreground underline decoration-2 underline-offset-4 transition-colors hover:text-primary"
+              >
+                {m.auth_login_signup_link()}
+              </Link>
+            </span>
+          </div>
         </CardFooter>
       </form>
     </Card>
