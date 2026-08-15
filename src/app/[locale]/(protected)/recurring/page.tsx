@@ -3,8 +3,16 @@
 // Neo-brutalism: header chip + bordered cards với shadow cứng.
 // ViewTabs (List/Calendar) — Calendar fetch occurrences tháng hiện tại.
 // Full i18n qua Paraglide messages.
+//
+// Mobile (<md) layout:
+// - Title text-2xl (1 dòng trên 390px), padding px-4 py-6.
+// - Action row full-width bên dưới title: button Sinh GD nếu có due (primary
+//   accent), Tạo quy tắc (secondary). Stack trên mobile vì 2 button 390px
+//   không còn horizontal space.
+// - Không sticky trên mobile (giống categories).
+// Desktop (≥md): giữ nguyên action row cạnh title.
 import Link from 'next/link';
-import { Repeat, Zap } from 'lucide-react';
+import { Repeat } from 'lucide-react';
 
 import {
   listActiveAccounts,
@@ -16,6 +24,7 @@ import {
 } from '@/features/recurring/actions';
 import { getRecurringOccurrences } from '@/features/recurring/calendar';
 import { RecurringForm } from '@/features/recurring/recurring-form';
+import { GenerateAllButton } from '@/features/recurring/generate-all-button';
 import { ViewTabs } from '@/features/recurring/view-tabs';
 import { todayIso } from '@/features/recurring/frequency';
 import { revalidatePath } from 'next/cache';
@@ -48,37 +57,43 @@ export default async function RecurringPage() {
   const dueCount = rules.filter((r) => r.is_active && r.next_run_at <= today).length;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-6 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <div className="mb-2 inline-flex border-2 border-border bg-secondary px-3 py-1 shadow-brutal-sm">
+    <div className="mx-auto max-w-6xl space-y-3 px-4 py-4 md:space-y-6 md:px-6 md:py-8">
+      {/* Compact header — mobile giảm chip + title size để viewport 390px
+          hiện được ít nhất 1 card ở fold trên.
+          Bỏ dòng subtitle trên mobile (chỉ desktop ≥md mới có). */}
+      <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-start md:justify-between md:gap-3">
+        <div className="min-w-0">
+          <div className="mb-1 inline-flex border-2 border-border bg-secondary px-2.5 py-0.5 shadow-brutal-sm md:mb-2 md:px-3 md:py-1">
             <span className="font-heading text-xs font-bold uppercase tracking-wider">
               {m.nav_recurring()}
             </span>
           </div>
-          <h1 className="mt-3 font-heading text-4xl font-bold uppercase leading-tight tracking-tight">
+          <h1 className="font-heading text-xl font-bold uppercase leading-tight tracking-tight md:mt-2 md:text-4xl">
             {m.recurring_page_title()}
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-1 hidden text-sm text-muted-foreground md:mt-2 md:block">
             {m.recurring_page_subtitle()}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {dueCount > 0 ? (
-            <form action={generateAllFormAction}>
-              <button
-                type="submit"
-                className="inline-flex h-10 items-center gap-1.5 border-2 border-border bg-accent px-4 font-heading text-xs font-bold uppercase tracking-wider shadow-brutal-sm transition-all hover:bg-accent/80 hover:shadow-brutal hover:-translate-x-[2px] hover:-translate-y-[2px]"
-              >
-                <Zap className="size-4" /> {m.recurring_list_generate_btn()} ({dueCount})
-              </button>
-            </form>
-          ) : null}
-          <RecurringForm
-            accounts={accounts}
-            categories={categories}
-            trigger="create"
+
+        {/* Action row — mobile cùng 1 hàng ngang 2 button 50/50 để tiết kiệm
+            vertical space (1 dòng thay vì 2 dòng). Desktop: 2 button inline
+            cạnh title.
+            Sinh GD luôn hiển thị (không ẩn khi dueCount=0) → disable với tooltip
+            "không có GD đến hạn" để giữ layout ổn định + cho user thấy feature
+            luôn tồn tại (UI-UX ProMax — đừng ẩn control quan trọng). */}
+        <div className="flex items-center gap-2">
+          <GenerateAllButton
+            dueCount={dueCount}
+            action={generateAllFormAction}
           />
+          <div className="flex-1 md:flex-none">
+            <RecurringForm
+              accounts={accounts}
+              categories={categories}
+              trigger="create"
+            />
+          </div>
         </div>
       </div>
 

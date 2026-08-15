@@ -28,9 +28,17 @@ const badgeVariants = cva(
         income:
           "bg-income text-white",
       },
+      size: {
+        // Default — chiếm nhiều width, dùng cho desktop.
+        default: "h-6 px-2.5 text-xs",
+        // Compact — giảm height/padding/text để list dày trên mobile có
+        // đủ chỗ cho name + amount mà vẫn show được nhiều badge.
+        sm: "h-5 gap-0.5 px-1.5 text-[10px] tracking-wide",
+      },
     },
     defaultVariants: {
       variant: "default",
+      size: "default",
     },
   }
 )
@@ -38,6 +46,7 @@ const badgeVariants = cva(
 function Badge({
   className,
   variant = "default",
+  size = "default",
   render,
   ...props
 }: useRender.ComponentProps<"span"> & VariantProps<typeof badgeVariants>) {
@@ -45,7 +54,7 @@ function Badge({
     defaultTagName: "span",
     props: mergeProps<"span">(
       {
-        className: cn(badgeVariants({ variant }), className),
+        className: cn(badgeVariants({ variant, size }), className),
       },
       props
     ),
@@ -53,6 +62,7 @@ function Badge({
     state: {
       slot: "badge",
       variant,
+      size,
     },
   })
 }
