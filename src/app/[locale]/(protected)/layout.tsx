@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { NavLinks } from '@/features/dashboard/nav-links';
-import { MobileNav } from '@/features/dashboard/mobile-nav';
+import { MobileNav, QuickAddFab } from '@/features/dashboard/mobile-nav';
 import { BrandLogo } from '@/components/branding/brand-logo';
 import { UserAvatar } from '@/components/branding/user-avatar';
 import { PageTransition } from '@/components/branding/page-transition';
@@ -51,8 +51,16 @@ export default async function ProtectedLayout({
       .order('name', { ascending: true }),
   ]);
 
+  // min-h-dvh (dynamic viewport height) thay vì min-h-svh để layout root
+// theo visible viewport hiện tại, kể cả khi mobile address bar ẩn/hiện.
+// Quan trọng cho MobileNav fixed bottom-0: trên mobile Safari/Chrome,
+// 'fixed' neo theo layout viewport (~844px), còn visual viewport thay đổi
+// theo address bar (~750px khi bar hiện, ~844 khi ẩn). Nếu layout root
+// dùng 100svh (=750px), bar ở y=780 nằm ngoài visible area → user thấy
+// khoảng trống dưới skeleton. dvh sync với visual viewport nên bar luôn
+// sát mép dưới màn hình user nhìn thấy.
   return (
-    <div className="flex min-h-svh flex-1 flex-col">
+    <div className="flex min-h-dvh flex-1 flex-col">
       <header className="border-b-4 border-border bg-card shadow-brutal">
         {/* Mobile (<md): full-width edge-to-edge, không mx-auto / max-w.
            ≥md: max-w-6xl centered như cũ để desktop giữ cảm giác centered header. */}
@@ -69,7 +77,7 @@ export default async function ProtectedLayout({
           </div>
         </div>
       </header>
-      <main id="main-content" className="flex-1 pb-20 md:pb-0">
+      <main id="main-content" className="min-h-[60vh] flex-1 pb-20 md:pb-0">
         <PageTransition>{children}</PageTransition>
       </main>
       <QuickAddForm
@@ -77,7 +85,6 @@ export default async function ProtectedLayout({
         categories={categories ?? []}
       />
       <ScrollToTop />
-      <MobileNav />
       <footer className="border-t-4 border-border bg-card py-3">
         <nav
           aria-label="Legal"
@@ -98,6 +105,11 @@ export default async function ProtectedLayout({
           </Link>
         </nav>
       </footer>
+      {/* MobileNav + QuickAddFab đặt ngoài <main> và sau <footer> trong DOM tree,
+          dùng fixed nên không chiếm flex space — chỉ render ở đáy viewport.
+          Đặt ngoài flex column để đảm bảo footer chiếm bottom-most flex slot. */}
+      <MobileNav />
+      <QuickAddFab />
     </div>
   );
 }

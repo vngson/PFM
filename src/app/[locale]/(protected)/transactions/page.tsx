@@ -109,8 +109,9 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
         </div>
       </div>
 
-      {/* Summary chips theo currency (luôn cả tháng, không filter type) */}
-      <div className="flex flex-wrap gap-3">
+      {/* Summary chips theo currency (luôn cả tháng, không filter type).
+          Mobile: mỗi SummaryCard full-width — padding đều 2 bên, chip dài ra. */}
+      <div className="space-y-3">
         {Object.keys(summary.byCurrency).length === 0 ? (
           <div className="border-2 border-dashed border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
             {m.transactions_empty_desc()}
@@ -192,11 +193,11 @@ function SummaryCard({
   count: number;
 }) {
   return (
-    // Mobile (<md): grid 3 cột đều nhau, mỗi phần chiếm 1/3 — không bị rỗng
-    // bên phải khi RÒNG wrap, margin trái/phải đều nhờ `gap-px` + divider dọc.
+    // Mobile (<md): flex-col — 3 hàng dọc, m�i hàng 1 item (THU / CHI / RÒNG).
+    // Tránh tràn khi số tiền VND dài (vd 23.722.421 ₫) ở viewport ~390px.
     // ≥sm: flex-row 3 đoạn ngang, border-r-2 ngăn giữa các cột.
-    <div className="grid grid-cols-3 border-2 border-border bg-card shadow-brutal-sm divide-x-2 divide-border sm:flex sm:flex-row sm:items-stretch sm:divide-x-0 sm:gap-0">
-      <div className="flex flex-col justify-center gap-1 bg-income/10 px-3 py-3 sm:border-r-2 sm:border-border sm:px-4 sm:py-3">
+    <div className="flex flex-col divide-y-2 divide-border border-2 border-border bg-card shadow-brutal-sm sm:flex-row sm:items-stretch sm:divide-x-2 sm:divide-y-0">
+      <div className="flex items-center justify-between gap-2 bg-income/10 px-4 py-2.5 sm:flex-col sm:justify-center sm:gap-1 sm:border-r-2 sm:border-border sm:px-4 sm:py-3">
         <div className="flex items-center gap-1.5 text-income">
           <TrendingUp className="size-3.5 shrink-0" />
           <span className="font-heading text-xs font-bold uppercase tracking-wider">{m.chart_legend_income()}</span>
@@ -205,7 +206,7 @@ function SummaryCard({
           {formatCurrency(income, code)}
         </span>
       </div>
-      <div className="flex flex-col justify-center gap-1 bg-expense/10 px-3 py-3 sm:border-r-2 sm:border-border sm:px-4 sm:py-3">
+      <div className="flex items-center justify-between gap-2 bg-expense/10 px-4 py-2.5 sm:flex-col sm:justify-center sm:gap-1 sm:border-r-2 sm:border-border sm:px-4 sm:py-3">
         <div className="flex items-center gap-1.5 text-expense">
           <TrendingDown className="size-3.5 shrink-0" />
           <span className="font-heading text-xs font-bold uppercase tracking-wider">{m.chart_legend_expense()}</span>
@@ -214,7 +215,7 @@ function SummaryCard({
           {formatCurrency(expense, code)}
         </span>
       </div>
-      <div className="flex flex-col justify-center gap-1 bg-card px-3 py-3 sm:px-4 sm:py-3">
+      <div className="flex items-center justify-between gap-2 bg-muted/40 px-4 py-2.5 sm:flex-col sm:justify-center sm:gap-1 sm:px-4 sm:py-3">
         <div className="flex items-center gap-1.5 text-muted-foreground">
           <Wallet className="size-3.5 shrink-0" />
           <span className="font-heading text-xs font-bold uppercase tracking-wider">

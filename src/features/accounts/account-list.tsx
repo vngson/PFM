@@ -24,11 +24,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  ListCard,
-  ListCardHeader,
-  ListCardFooter,
-} from '@/components/ui/list-card';
+import { ListCard } from '@/components/ui/list-card';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -110,68 +106,72 @@ export function AccountList({ accounts }: AccountListProps) {
 
   return (
     <>
-      {/* Mobile card view (<md) */}
+      {/* Mobile card view (<md)
+          - 2-row column layout: row 1 = identity (icon + name + badge), row 2 = balance
+          - Balance tách riêng hẳn dòng dưới → không đè name, name không bị truncate vì balance
+          - ⋮ absolute top-right, không chiếm layout, ≥44px tap area
+          - Neo-brutalism: border-2 + shadow + uppercase heading + tabular-nums balance */}
       <div className="space-y-2 md:hidden">
         {accounts.map((acc) => {
           const Icon = getIcon(acc.icon_name);
           return (
-            <ListCard key={acc.id}>
-              <ListCardHeader>
-                <Link
-                  href={buildLocalizedHref(`/accounts/${acc.id}`, getLocale())}
-                  className="flex items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            <ListCard key={acc.id} className="relative pr-14">
+              {/* ⋮ action — absolute top-right, không chiếm layout, ≥44px tap area */}
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={m.accounts_actions_aria()}
+                      className="absolute right-1 top-1 size-9 min-h-11 min-w-11"
+                    />
+                  }
                 >
-                  <div
-                    className="flex size-10 shrink-0 items-center justify-center border-2 border-border text-white"
-                    style={{ backgroundColor: acc.color ?? '#64748b' }}
+                  <MoreVertical className="size-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setEditingAccount(acc)}>
+                    <Pencil className="size-4" /> {m.common_edit()}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleArchive(acc.id)}>
+                    <Archive className="size-4" /> {m.common_archive()}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => setDeletingAccount(acc)}
                   >
-                    <Icon className="size-5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <span className="block truncate font-heading font-bold uppercase tracking-wide">
-                      {acc.name}
-                    </span>
-                    <Badge variant="secondary" className="mt-0.5">{TYPE_LABELS[acc.type]()}</Badge>
-                  </div>
-                </Link>
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    render={
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={m.accounts_actions_aria()}
-                      />
-                    }
-                  >
-                    <MoreVertical className="size-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setEditingAccount(acc)}>
-                      <Pencil className="size-4" /> {m.common_edit()}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleArchive(acc.id)}>
-                      <Archive className="size-4" /> {m.common_archive()}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onClick={() => setDeletingAccount(acc)}
-                    >
-                      <Trash2 className="size-4" /> {m.common_delete()}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </ListCardHeader>
-              <ListCardFooter>
-                <Link
-                  href={buildLocalizedHref(`/accounts/${acc.id}`, getLocale())}
-                  className="block focus-visible:ring-2 focus-visible:ring-ring"
+                    <Trash2 className="size-4" /> {m.common_delete()}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Row 1 — identity: icon (48px) + name+badge (flex-1).
+                  pr-12 chừa chỗ cho ⋮ absolute ở góc trên phải. */}
+              <Link
+                href={buildLocalizedHref(`/accounts/${acc.id}`, getLocale())}
+                className="grid grid-cols-[auto_1fr] items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <div
+                  className="flex size-12 shrink-0 items-center justify-center border-2 border-border text-white"
+                  style={{ backgroundColor: acc.color ?? '#64748b' }}
                 >
-                  <span className="font-heading text-base font-bold">
-                    {formatCurrency(acc.current_balance, acc.currency_code)}
+                  <Icon className="size-6" />
+                </div>
+                <div className="min-w-0">
+                  <span className="block truncate font-heading font-bold uppercase tracking-wide">
+                    {acc.name}
                   </span>
-                </Link>
-              </ListCardFooter>
+                  <Badge variant="secondary" className="mt-1">
+                    {TYPE_LABELS[acc.type]()}
+                  </Badge>
+                </div>
+                {/* Balance — col 2, row-span 2, right-aligned, vertical center */}
+                <span className="col-start-2 row-span-2 self-center justify-self-end text-right font-heading text-base font-bold leading-tight tabular-nums">
+                  {formatCurrency(acc.current_balance, acc.currency_code)}
+                </span>
+              </Link>
+
             </ListCard>
           );
         })}

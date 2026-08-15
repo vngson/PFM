@@ -186,7 +186,7 @@ export function TransactionList({
           key={group.date}
           className="border-2 border-border bg-card shadow-brutal-sm"
         >
-          <div className="flex items-center justify-between border-b-2 border-border bg-secondary px-4 py-2">
+          <div className="flex flex-col gap-1 border-b-2 border-border bg-secondary px-4 py-2 md:flex-row md:items-center md:justify-between md:gap-0">
             <span className="font-heading text-xs font-bold uppercase tracking-wider">
               {dateFmt.format(new Date(group.date))}
             </span>
@@ -199,7 +199,8 @@ export function TransactionList({
             </span>
           </div>
 
-          {/* Mobile card view (<md) — 3 rows fixed height, ⋮ nằm cùng row 1 */}
+          {/* Mobile card view (<md) — 3 rows, icon gọn (24px) để nhường chỗ
+              cho Amount + ⋮ cùng dòng (row 1) mà không che nhau. */}
           <div className="space-y-2 p-2 md:hidden">
             {group.rows.map((row) => {
               const meta = TYPE_META[row.type];
@@ -211,77 +212,84 @@ export function TransactionList({
               return (
                 <div
                   key={row.id}
-                  className="grid grid-cols-[2.25rem_minmax(0,1fr)_auto] grid-rows-[auto_auto_auto] gap-x-3 gap-y-1.5 border-2 border-border bg-card p-3 shadow-brutal-sm"
+                  className="grid grid-cols-[1.5rem_minmax(0,1fr)_auto] grid-rows-[auto_auto_auto] gap-x-2 gap-y-1.5 border-2 border-border bg-card p-3 shadow-brutal-sm"
                 >
-                  {/* Row 1 — Icon (chiếm cả 3 row ở col 1) + Name + Badge + Amount + ⋮ */}
+                  {/* Row 1-3 — Icon (col 1, row-span 3) — 24px gọn */}
                   <div
-                    className="row-span-3 flex size-9 shrink-0 items-center justify-center border-2 border-border text-white"
+                    className="row-span-3 flex size-6 shrink-0 items-center justify-center border-2 border-border text-white"
                     style={{ backgroundColor: row.category?.color ?? fallbackColor }}
                     aria-hidden="true"
                   >
                     {CatIcon ? (
-                      <CatIcon className="size-4" />
+                      <CatIcon className="size-3" />
                     ) : row.type === 'transfer' ? (
-                      <ArrowLeftRight className="size-4" />
+                      <ArrowLeftRight className="size-3" />
                     ) : row.type === 'income' ? (
-                      <ArrowDownLeft className="size-4" />
+                      <ArrowDownLeft className="size-3" />
                     ) : (
-                      <ArrowUpRight className="size-4" />
+                      <ArrowUpRight className="size-3" />
                     )}
                   </div>
-                  <div className="col-start-2 flex min-w-0 items-center gap-x-2 gap-y-0.5">
+
+                  {/* Row 1 — Name + Badge (col 2) + Amount + ⋮ (col 3, cùng dòng) */}
+                  <div className="col-start-2 flex min-w-0 items-center gap-x-2 gap-y-0.5 pr-1">
                     <span className="truncate font-heading text-sm font-bold uppercase tracking-wide">
                       {row.category?.name ?? TYPE_META[row.type].label()}
                     </span>
                     <Badge variant={meta.badge} className="shrink-0">{meta.label()}</Badge>
                   </div>
-                  <span
-                    className={`col-start-3 row-start-1 whitespace-nowrap font-heading text-base font-bold tabular-nums ${meta.color}`}
-                  >
-                    {sign} {formatCurrency(row.amount, row.account.currency_code)}
-                  </span>
 
-                  {/* Row 2 — Source (account) */}
-                  <span className="col-span-2 col-start-2 row-start-2 inline-flex items-center gap-1.5 truncate text-xs text-muted-foreground">
+                  {/* Amount — col 3 row 1, cùng dòng với Name+Badge nhưng
+                       nằm riêng cột phải để ⋮ có chỗ đứng kế bên. */}
+                  <div className="col-start-3 row-start-1 flex items-center gap-1 whitespace-nowrap">
                     <span
-                      className="inline-flex size-3 shrink-0 items-center justify-center border border-border"
-                      style={{ backgroundColor: row.account.color ?? '#64748b' }}
+                      className={`font-heading text-sm font-bold tabular-nums ${meta.color}`}
                     >
-                      <AccIcon className="size-2 text-white" />
+                      {sign} {formatCurrency(row.amount, row.account.currency_code)}
                     </span>
+                    {/* ⋮ — ghost (không border, không bg) cùng row với amount.
+                         size 7 để không chiếm quá nhiều chỗ nhưng vẫn ≥28px touch. */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        render={
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={m.accounts_actions_aria()}
+                            className="size-7 min-h-7 min-w-7 text-muted-foreground hover:text-foreground"
+                          />
+                        }
+                      >
+                        <MoreVertical className="size-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setEditingTransaction(row)}>
+                          <Pencil className="size-4" /> {m.common_edit()}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => setDeletingTransaction(row)}
+                        >
+                          <Trash2 className="size-4" /> {m.common_delete()}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  {/* Row 2 — Source (account). col-start-2 (cùng cột với text dòng 1)
+                       + pl-7 = width icon box (size-6 24px + border-2 mỗi bên = 28px)
+                       → text "Momo - Quỹ" bắt đầu ở mép phải icon (thẳng hàng icon).
+                       min-h giữ chiều cao ổn định dù account name ngắn hay dài. */}
+                  <span className="col-span-2 col-start-2 row-start-2 inline-flex min-h-4 items-center truncate pl-0 text-xs text-muted-foreground">
                     {row.account.name}
                   </span>
 
-                  {/* Row 3 — Description (reserved height, truncate 1 line) */}
-                  <p className="col-span-2 col-start-2 row-start-3 truncate text-xs italic text-muted-foreground">
+                  {/* Row 3 — Description. Cùng left-edge với row 2
+                       (thẳng hàng icon), row 3 đúng vị trí. min-h giữ
+                       card đều chiều cao dù có note hay không. */}
+                  <p className="col-span-2 col-start-2 row-start-3 min-h-4 truncate pl-0 text-xs italic text-muted-foreground">
                     {row.note ?? ''}
                   </p>
-
-                  {/* ⋮ — absolute top-right, cùng row 1 với amount, ≥32px touch target */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={
-                        <Button
-                          variant="ghost"
-                          aria-label={m.accounts_actions_aria()}
-                          className="absolute right-1.5 top-1.5 inline-flex size-8 min-h-8 min-w-8 items-center justify-center"
-                        />
-                      }
-                    >
-                      <MoreVertical className="size-4" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setEditingTransaction(row)}>
-                        <Pencil className="size-4" /> {m.common_edit()}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onClick={() => setDeletingTransaction(row)}
-                      >
-                        <Trash2 className="size-4" /> {m.common_delete()}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                 </div>
               );
             })}

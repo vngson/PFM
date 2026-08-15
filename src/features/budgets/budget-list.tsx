@@ -107,8 +107,9 @@ export function BudgetList({ budgets, categories }: BudgetListProps) {
 
   return (
     <div className="space-y-4">
-      {/* Summary chip */}
-      <div className="flex flex-wrap items-stretch gap-0 border-2 border-border shadow-brutal-sm">
+      {/* Summary chip — stack vertical trên mobile (3 row), 3-col ngang từ sm: trở lên
+          Tiết kiệm vertical space, mỗi chip có divider border-b-2 trên mobile. */}
+      <div className="flex flex-col border-2 border-border shadow-brutal-sm sm:flex-row sm:items-stretch">
         <div className="flex flex-1 flex-col justify-center gap-1 border-b-2 border-border bg-card px-4 py-3 last:border-b-0 sm:border-b-0 sm:border-r-2">
           <span className="font-heading text-xs font-bold uppercase tracking-wider text-muted-foreground">
             {m.budgets_summary_total_limit()}
@@ -157,66 +158,74 @@ export function BudgetList({ budgets, categories }: BudgetListProps) {
           return (
             <div
               key={b.id}
-              className="border-2 border-border bg-card p-4 shadow-brutal-sm"
+              className="relative border-2 border-border bg-card p-4 shadow-brutal-sm"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="flex size-10 shrink-0 items-center justify-center border-2 border-border text-white"
-                    style={{ backgroundColor: b.category?.color ?? '#64748b' }}
-                    aria-hidden="true"
-                  >
-                    <Icon className="size-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-heading text-sm font-bold uppercase tracking-wide">
-                      {b.category?.name ?? m.budgets_card_fallback_category()}
-                    </h3>
-                    <span
-                      className={`mt-1 inline-flex border-2 border-border px-1.5 py-0.5 font-heading text-[10px] font-bold uppercase tracking-wider ${status.badgeClass}`}
-                    >
-                      {status.label}
-                    </span>
-                  </div>
-                </div>
+              {/* Actions — 2 button compact (icon-only) cho gọn card.
+                  Sửa dùng BudgetForm trigger="edit" (mount DialogTrigger tự động).
+                  pr của header chừa chỗ cho 2 button ~56px. */}
+              <div className="absolute right-2 top-2 flex items-center gap-0.5">
+                <BudgetForm
+                  budget={b as Budget}
+                  categories={categories}
+                  defaultMonth={b.period_month.slice(0, 7)}
+                  trigger="edit"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={m.budgets_delete_title()}
+                  onClick={() => setDeletingId(b.id)}
+                  data-destructive="true"
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
+              </div>
 
-                <div className="flex items-center gap-1">
-                  <BudgetForm
-                    budget={b as Budget}
-                    categories={categories}
-                    defaultMonth={b.period_month.slice(0, 7)}
-                    trigger="edit"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    aria-label={m.budgets_delete_title()}
-                    onClick={() => setDeletingId(b.id)}
-                    data-destructive="true"
+              {/* Header: icon 48px + name (truncate) + status badge. pr-10 chừa chỗ cho ⋮ */}
+              <div className="flex items-center gap-3 pr-20">
+                <div
+                  className="flex size-12 shrink-0 items-center justify-center border-2 border-border text-white"
+                  style={{ backgroundColor: b.category?.color ?? '#64748b' }}
+                  aria-hidden="true"
+                >
+                  <Icon className="size-6" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate font-heading text-sm font-bold uppercase tracking-wide">
+                    {b.category?.name ?? m.budgets_card_fallback_category()}
+                  </h3>
+                  <span
+                    className={`mt-1 inline-flex border-2 border-border px-1.5 py-0.5 font-heading text-[10px] font-bold uppercase tracking-wider ${status.badgeClass}`}
                   >
-                    <Trash2 className="size-3.5" /> {m.common_delete()}
-                  </Button>
+                    {status.label}
+                  </span>
                 </div>
               </div>
 
-              {/* Amount row */}
-              <div className="mt-4 flex items-baseline justify-between">
-                <span className="font-heading text-2xl font-bold">
+              {/* Spent — focal point (text-2xl) + % ngay cạnh cho scan nhanh */}
+              <div className="mt-3 flex items-baseline gap-2">
+                <span className="font-heading text-2xl font-bold tabular-nums">
                   {formatCurrency(b.spent, 'VND')}
-                  <span className="ml-1 text-sm font-normal text-muted-foreground">
-                    / {formatCurrency(limit, 'VND')}
-                  </span>
                 </span>
                 <span
-                  className={`font-heading text-sm font-bold ${
+                  className={`font-heading text-sm font-bold tabular-nums ${
                     status.isOver ? 'text-expense' : 'text-muted-foreground'
                   }`}
                 >
-                  {remaining >= 0
-                    ? m.budgets_card_remaining({ amount: formatCurrency(remaining, 'VND') })
-                    : m.budgets_card_exceeded({ amount: formatCurrency(Math.abs(remaining), 'VND') })}
+                  / {formatCurrency(limit, 'VND')}
                 </span>
               </div>
+
+              {/* Remaining / exceeded — dòng phụ muted */}
+              <p
+                className={`mt-1 text-xs ${
+                  status.isOver ? 'font-bold text-expense' : 'text-muted-foreground'
+                }`}
+              >
+                {remaining >= 0
+                  ? m.budgets_card_remaining({ amount: formatCurrency(remaining, 'VND') })
+                  : m.budgets_card_exceeded({ amount: formatCurrency(Math.abs(remaining), 'VND') })}
+              </p>
 
               {/* Progress bar — clipped at 100% for visual */}
               <div

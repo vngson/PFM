@@ -17,7 +17,7 @@ export default async function PublicLayout({
   const locale = getLocale();
   const homeHref = buildLocalizedHref('/', locale);
   return (
-    <div className="flex min-h-svh flex-1 flex-col">
+    <div className="flex min-h-dvh flex-1 flex-col">
       <header className="border-b-4 border-border bg-card shadow-brutal">
         <div className="mx-auto flex max-w-6xl flex-nowrap items-center justify-between gap-3 whitespace-nowrap px-6 py-3">
           <BrandLogo />

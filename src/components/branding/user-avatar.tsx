@@ -5,7 +5,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  ChevronDown,
   LogOut,
   Repeat,
   Settings as SettingsIcon,
@@ -46,13 +45,12 @@ export function UserAvatar({ email }: UserAvatarProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="group inline-flex items-center gap-1.5 border-2 border-border bg-card px-1 py-1 shadow-brutal-sm transition-all hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-brutal outline-none"
+        className="group inline-flex size-10 items-center justify-center border-2 border-border bg-card shadow-brutal-sm transition-all hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-brutal outline-none"
         aria-label={m.user_avatar_menu_aria()}
       >
-        <span className="inline-flex size-8 items-center justify-center border-2 border-border bg-secondary font-heading text-sm font-bold uppercase">
+        <span className="inline-flex size-full items-center justify-center border-0 bg-secondary font-heading text-sm font-bold uppercase">
           {initials(email)}
         </span>
-        <ChevronDown className="size-4 text-muted-foreground transition-transform group-aria-expanded:rotate-180" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-56">
         <DropdownMenuGroup>

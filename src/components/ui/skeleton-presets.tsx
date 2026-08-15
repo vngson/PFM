@@ -32,41 +32,67 @@ interface SkeletonTableProps {
   className?: string;
 }
 
-/** Table skeleton (rows + cols). */
+/** Table skeleton (rows + cols).
+ * Mobile (<md): chuyển sang card-stack — mỗi row là 1 card với icon + 2 dòng text
+ * (giống AccountList / TransactionList mobile view) để tránh bị nén 4 cột trên 390px.
+ * Desktop (≥md): grid ngang với cols cố định (table view). */
 export function SkeletonTable({
   rows = 5,
   cols = 3,
   className,
 }: SkeletonTableProps) {
   return (
-    <div
-      className={`overflow-hidden border-2 border-border bg-card shadow-brutal-sm ${className ?? ''}`}
-    >
-      <div className="grid gap-2 border-b-2 border-border bg-muted/40 p-3" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
-        {Array.from({ length: cols }).map((_, i) => (
-          <Skeleton key={i} className="h-4" />
-        ))}
-      </div>
-      <div className="divide-y-2 divide-border">
+    <>
+      {/* Mobile card-stack (<md) — match với list cards thật */}
+      <div className={`space-y-2 md:hidden ${className ?? ''}`}>
         {Array.from({ length: rows }).map((_, r) => (
           <div
             key={r}
-            className="grid gap-2 p-3"
-            style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+            className="flex items-center gap-3 border-2 border-border bg-card p-3 shadow-brutal-sm"
           >
-            {Array.from({ length: cols }).map((_, c) => (
-              <Skeleton
-                key={c}
-                className="h-4"
-                style={{
-                  width: c === 0 ? '70%' : c === cols - 1 ? '40%' : '85%',
-                }}
-              />
-            ))}
+            <Skeleton className="size-12 shrink-0" />
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+            <Skeleton className="h-5 w-20 shrink-0" />
           </div>
         ))}
       </div>
-    </div>
+
+      {/* Desktop grid table (≥md) */}
+      <div
+        className={`hidden overflow-hidden border-2 border-border bg-card shadow-brutal-sm md:block ${className ?? ''}`}
+      >
+        <div
+          className="grid gap-2 border-b-2 border-border bg-muted/40 p-3"
+          style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+        >
+          {Array.from({ length: cols }).map((_, i) => (
+            <Skeleton key={i} className="h-4" />
+          ))}
+        </div>
+        <div className="divide-y-2 divide-border">
+          {Array.from({ length: rows }).map((_, r) => (
+            <div
+              key={r}
+              className="grid gap-2 p-3"
+              style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+            >
+              {Array.from({ length: cols }).map((_, c) => (
+                <Skeleton
+                  key={c}
+                  className="h-4"
+                  style={{
+                    width: c === 0 ? '70%' : c === cols - 1 ? '40%' : '85%',
+                  }}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -92,7 +118,8 @@ interface SkeletonListProps {
   className?: string;
 }
 
-/** List skeleton (item có icon + 2 dòng text). */
+/** List skeleton (item có icon + 2 dòng text + amount bên phải).
+ * Match với AccountList mobile card layout: icon 48px + flex-1 + amount right. */
 export function SkeletonList({ items = 4, className }: SkeletonListProps) {
   return (
     <div className={`space-y-2 ${className ?? ''}`}>
@@ -101,11 +128,12 @@ export function SkeletonList({ items = 4, className }: SkeletonListProps) {
           key={i}
           className="flex items-center gap-3 border-2 border-border bg-card p-3 shadow-brutal-sm"
         >
-          <Skeleton className="size-10 shrink-0" />
-          <div className="flex-1 space-y-1.5">
-            <Skeleton className="h-4 w-1/3" />
+          <Skeleton className="size-12 shrink-0" />
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <Skeleton className="h-4 w-2/3" />
             <Skeleton className="h-3 w-1/2" />
           </div>
+          <Skeleton className="h-5 w-20 shrink-0" />
         </div>
       ))}
     </div>

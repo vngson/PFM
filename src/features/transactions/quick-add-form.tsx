@@ -7,12 +7,13 @@
 // Tối ưu cho user ghi nhanh mà không cần mở full form.
 
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Minus, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Dialog,
   DialogContent,
@@ -29,7 +30,6 @@ import {
 } from '@/components/ui/select';
 
 import { getIcon } from '@/features/categories/icon-catalog';
-import { cn } from '@/lib/utils';
 import { useDialogFormState } from '@/lib/hooks/use-dialog-form-state';
 import { notify } from '@/lib/toast';
 import type { Transaction } from '@/types/database';
@@ -136,58 +136,27 @@ export function QuickAddForm({ accounts, categories }: QuickAddFormProps) {
         </DialogHeader>
 
         <form action={formAction} className="space-y-4">
-          {/* Hidden type */}
-          <input type="hidden" name="type" value={type} />
-          <input type="hidden" name="occurred_at" value={todayIso()} />
-
-          {/* Type toggle */}
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => setType('expense')}
-              className={cn(
-                'inline-flex h-10 items-center justify-center gap-1.5 border-2 border-border font-heading text-xs font-bold uppercase tracking-wider transition-all',
-                type === 'expense'
-                  ? 'bg-expense text-white shadow-brutal-sm'
-                  : 'bg-background text-foreground hover:bg-expense/20',
-              )}
-              aria-pressed={type === 'expense'}
-            >
-              <Minus className="size-4" /> {m.quick_add_type_expense()}
-            </button>
-            <button
-              type="button"
-              onClick={() => setType('income')}
-              className={cn(
-                'inline-flex h-10 items-center justify-center gap-1.5 border-2 border-border font-heading text-xs font-bold uppercase tracking-wider transition-all',
-                type === 'income'
-                  ? 'bg-income text-white shadow-brutal-sm'
-                  : 'bg-background text-foreground hover:bg-income/20',
-              )}
-              aria-pressed={type === 'income'}
-            >
-              <Plus className="size-4" /> {m.quick_add_type_income()}
-            </button>
-          </div>
-
-          {/* Amount */}
+          {/* Loại — Select giống pattern trong transaction-form.tsx.
+              Submit qua Select `name` (SelectPrimitive tự render hidden input). */}
           <div className="space-y-1.5">
-            <Label htmlFor="qa-amount">{m.quick_add_amount_label()}</Label>
-            <Input
-              id="qa-amount"
-              name="amount"
-              type="number"
-              inputMode="decimal"
-              min={0}
-              step={1000}
-              placeholder="0"
-              required
-              autoFocus
-              className="font-heading text-lg font-bold"
-            />
-            {fieldErr('amount') ? (
-              <p className="text-xs text-destructive">{fieldErr('amount')}</p>
-            ) : null}
+            <Label htmlFor="qa-type">{m.transactions_form_type_label()}</Label>
+            <Select
+              name="type"
+              value={type}
+              items={[
+                { value: 'expense', label: m.quick_add_type_expense() },
+                { value: 'income', label: m.quick_add_type_income() },
+              ]}
+              onValueChange={(v) => setType(v as Transaction['type'])}
+            >
+              <SelectTrigger id="qa-type" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="expense">{m.quick_add_type_expense()}</SelectItem>
+                <SelectItem value="income">{m.quick_add_type_income()}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Account */}
@@ -280,6 +249,41 @@ export function QuickAddForm({ accounts, categories }: QuickAddFormProps) {
             {fieldErr('category_id') ? (
               <p className="text-xs text-destructive">{fieldErr('category_id')}</p>
             ) : null}
+          </div>
+
+          {/* Số tiền + Ngày — grid 2 cột giống transaction-form.tsx.
+              Thứ tự field khớp desktop: Loại → TK → DM → Số tiền + Ngày → Ghi chú. */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="qa-amount">{m.quick_add_amount_label()}</Label>
+              <Input
+                id="qa-amount"
+                name="amount"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step={1000}
+                placeholder="0"
+                required
+                autoFocus
+                className="font-heading text-lg font-bold"
+              />
+              {fieldErr('amount') ? (
+                <p className="text-xs text-destructive">{fieldErr('amount')}</p>
+              ) : null}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="qa-occurred_at">{m.transactions_form_date_label()}</Label>
+              <DatePicker
+                id="qa-occurred_at"
+                name="occurred_at"
+                defaultValue={todayIso()}
+                required
+              />
+              {fieldErr('occurred_at') ? (
+                <p className="text-xs text-destructive">{fieldErr('occurred_at')}</p>
+              ) : null}
+            </div>
           </div>
 
           {/* Note (optional) */}
