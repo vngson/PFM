@@ -52,11 +52,12 @@ export function ScrollToTop() {
       // Inline-flex để có transition opacity + scale mượt khi toggle visible.
       // pointer-events-none khi ẩn để click xuyên qua (kể cả khi opacity-0).
       className={[
-        'fixed right-6 z-40 shadow-brutal-lg transition-all duration-200',
-        // Desktop: Quick-Add FAB ở bottom-6 (cao ~56px) → bottom-24 cách
-        // thêm 16px (cao hơn "ghi nhanh" đủ rõ, có buffer cho shadow).
-        // Mobile: Quick-Add FAB ẩn → vẫn bottom-24 để né MobileNav (bottom-0).
-        'bottom-24',
+        'fixed right-4 z-40 shadow-brutal-lg transition-all duration-200 sm:right-6',
+        // Mobile: MobileNav ở bottom-0 (cao ~64px) → ScrollToTop đặt bottom-28
+        // (112px) cách MobileNav ~48px rõ ràng, không đè icon nav.
+        // Desktop: Quick-Add FAB ở bottom-6 (cao ~56px) → bottom-24 (96px)
+        // cách thêm ~40px, có buffer cho shadow-brutal-lg 8px.
+        'bottom-28 sm:bottom-24',
         visible
           ? 'pointer-events-auto translate-y-0 opacity-100'
           : 'pointer-events-none translate-y-2 opacity-0',

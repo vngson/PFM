@@ -54,7 +54,9 @@ export default async function ProtectedLayout({
   return (
     <div className="flex min-h-svh flex-1 flex-col">
       <header className="border-b-4 border-border bg-card shadow-brutal">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 lg:flex-nowrap lg:whitespace-nowrap lg:px-6">
+        {/* Mobile (<md): full-width edge-to-edge, không mx-auto / max-w.
+           ≥md: max-w-6xl centered như cũ để desktop giữ cảm giác centered header. */}
+        <div className="flex w-full flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 md:mx-auto md:max-w-6xl md:flex-nowrap md:whitespace-nowrap md:px-6">
           <div className="flex items-center gap-4 md:gap-6 shrink-0">
             <BrandLogo />
             <NavLinks />

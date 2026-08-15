@@ -39,7 +39,9 @@ export function MobileNav() {
       aria-label="Mobile navigation"
       className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-border bg-card shadow-[0_-4px_0_0_var(--border)] md:hidden"
     >
-      <div className="mx-auto flex max-w-md items-end justify-between px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
+      {/* Full-width bar — không max-w-md để 4 nav chính + FAB chia đều
+         mọi viewport, không bị rỗng 2 bên khi màn hình >28rem. */}
+      <div className="flex w-full items-end justify-between px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
         {links.map((link) => {
           const Icon = link.icon;
           const localizedHref = buildLocalizedHref(link.href, getLocale());

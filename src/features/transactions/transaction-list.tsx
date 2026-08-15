@@ -32,12 +32,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  ListCard,
-  ListCardHeader,
-  ListCardMeta,
-  ListCardFooter,
-} from '@/components/ui/list-card';
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -205,7 +199,7 @@ export function TransactionList({
             </span>
           </div>
 
-          {/* Mobile card view (<md) */}
+          {/* Mobile card view (<md) — 3 rows fixed height, ⋮ nằm cùng row 1 */}
           <div className="space-y-2 p-2 md:hidden">
             {group.rows.map((row) => {
               const meta = TYPE_META[row.type];
@@ -215,76 +209,80 @@ export function TransactionList({
               const fallbackColor =
                 row.type === 'income' ? '#7fb069' : row.type === 'expense' ? '#ff4d4d' : '#64748b';
               return (
-                <ListCard key={row.id}>
-                  <ListCardHeader>
-                    <div
-                      className="flex size-9 shrink-0 items-center justify-center border-2 border-border text-white"
-                      style={{ backgroundColor: row.category?.color ?? fallbackColor }}
-                      aria-hidden="true"
-                    >
-                      {CatIcon ? (
-                        <CatIcon className="size-4" />
-                      ) : row.type === 'transfer' ? (
-                        <ArrowLeftRight className="size-4" />
-                      ) : row.type === 'income' ? (
-                        <ArrowDownLeft className="size-4" />
-                      ) : (
-                        <ArrowUpRight className="size-4" />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                        <span className="truncate font-heading text-sm font-bold uppercase tracking-wide">
-                          {row.category?.name ?? TYPE_META[row.type].label()}
-                        </span>
-                        <Badge variant={meta.badge}>{meta.label()}</Badge>
-                      </div>
-                    </div>
+                <div
+                  key={row.id}
+                  className="grid grid-cols-[2.25rem_minmax(0,1fr)_auto] grid-rows-[auto_auto_auto] gap-x-3 gap-y-1.5 border-2 border-border bg-card p-3 shadow-brutal-sm"
+                >
+                  {/* Row 1 — Icon (chiếm cả 3 row ở col 1) + Name + Badge + Amount + ⋮ */}
+                  <div
+                    className="row-span-3 flex size-9 shrink-0 items-center justify-center border-2 border-border text-white"
+                    style={{ backgroundColor: row.category?.color ?? fallbackColor }}
+                    aria-hidden="true"
+                  >
+                    {CatIcon ? (
+                      <CatIcon className="size-4" />
+                    ) : row.type === 'transfer' ? (
+                      <ArrowLeftRight className="size-4" />
+                    ) : row.type === 'income' ? (
+                      <ArrowDownLeft className="size-4" />
+                    ) : (
+                      <ArrowUpRight className="size-4" />
+                    )}
+                  </div>
+                  <div className="col-start-2 flex min-w-0 items-center gap-x-2 gap-y-0.5">
+                    <span className="truncate font-heading text-sm font-bold uppercase tracking-wide">
+                      {row.category?.name ?? TYPE_META[row.type].label()}
+                    </span>
+                    <Badge variant={meta.badge} className="shrink-0">{meta.label()}</Badge>
+                  </div>
+                  <span
+                    className={`col-start-3 row-start-1 whitespace-nowrap font-heading text-base font-bold tabular-nums ${meta.color}`}
+                  >
+                    {sign} {formatCurrency(row.amount, row.account.currency_code)}
+                  </span>
+
+                  {/* Row 2 — Source (account) */}
+                  <span className="col-span-2 col-start-2 row-start-2 inline-flex items-center gap-1.5 truncate text-xs text-muted-foreground">
                     <span
-                      className={`shrink-0 font-heading text-base font-bold tabular-nums ${meta.color}`}
+                      className="inline-flex size-3 shrink-0 items-center justify-center border border-border"
+                      style={{ backgroundColor: row.account.color ?? '#64748b' }}
                     >
-                      {sign} {formatCurrency(row.amount, row.account.currency_code)}
+                      <AccIcon className="size-2 text-white" />
                     </span>
-                  </ListCardHeader>
-                  <ListCardMeta>
-                    <span className="inline-flex items-center gap-1.5">
-                      <span
-                        className="inline-flex size-3 shrink-0 items-center justify-center border border-border"
-                        style={{ backgroundColor: row.account.color ?? '#64748b' }}
+                    {row.account.name}
+                  </span>
+
+                  {/* Row 3 — Description (reserved height, truncate 1 line) */}
+                  <p className="col-span-2 col-start-2 row-start-3 truncate text-xs italic text-muted-foreground">
+                    {row.note ?? ''}
+                  </p>
+
+                  {/* ⋮ — absolute top-right, cùng row 1 với amount, ≥32px touch target */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button
+                          variant="ghost"
+                          aria-label={m.accounts_actions_aria()}
+                          className="absolute right-1.5 top-1.5 inline-flex size-8 min-h-8 min-w-8 items-center justify-center"
+                        />
+                      }
+                    >
+                      <MoreVertical className="size-4" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setEditingTransaction(row)}>
+                        <Pencil className="size-4" /> {m.common_edit()}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => setDeletingTransaction(row)}
                       >
-                        <AccIcon className="size-2 text-white" />
-                      </span>
-                      {row.account.name}
-                    </span>
-                    {row.note ? <p className="italic">{row.note}</p> : null}
-                  </ListCardMeta>
-                  <ListCardFooter>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        render={
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            aria-label={m.accounts_actions_aria()}
-                          />
-                        }
-                      >
-                        <MoreVertical className="size-4" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setEditingTransaction(row)}>
-                          <Pencil className="size-4" /> {m.common_edit()}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onClick={() => setDeletingTransaction(row)}
-                        >
-                          <Trash2 className="size-4" /> {m.common_delete()}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </ListCardFooter>
-                </ListCard>
+                        <Trash2 className="size-4" /> {m.common_delete()}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               );
             })}
           </div>
