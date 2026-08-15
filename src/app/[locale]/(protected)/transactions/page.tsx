@@ -110,7 +110,11 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
       </div>
 
       {/* Summary chips theo currency (luôn cả tháng, không filter type).
-          Mobile: mỗi SummaryCard full-width — padding đều 2 bên, chip dài ra. */}
+          Mobile: mỗi SummaryCard full-width — padding đều 2 bên, chip dài ra.
+          PC: 3 cards ngang compact, width cap bằng `lg:w-fit lg:min-w-[28rem]`
+          + `lg:divide-x-2` (3-cột ngang) — tránh giãn hết max-w-6xl của page
+          (~1152px) làm cards phình quá to. UI-UX ProMax: left-aligned,
+          compact, content list bên dưới giữ full-width bình thường. */}
       <div className="space-y-3">
         {Object.keys(summary.byCurrency).length === 0 ? (
           <div className="border-2 border-dashed border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
@@ -196,26 +200,26 @@ function SummaryCard({
     // Mobile (<md): flex-col — 3 hàng dọc, m�i hàng 1 item (THU / CHI / RÒNG).
     // Tránh tràn khi số tiền VND dài (vd 23.722.421 ₫) ở viewport ~390px.
     // ≥sm: flex-row 3 đoạn ngang, border-r-2 ngăn giữa các cột.
-    <div className="flex flex-col divide-y-2 divide-border border-2 border-border bg-card shadow-brutal-sm sm:flex-row sm:items-stretch sm:divide-x-2 sm:divide-y-0">
-      <div className="flex items-center justify-between gap-2 bg-income/10 px-4 py-2.5 sm:flex-col sm:justify-center sm:gap-1 sm:border-r-2 sm:border-border sm:px-4 sm:py-3">
+    <div className="flex flex-col divide-y-2 divide-border border-2 border-border bg-card shadow-brutal-sm sm:max-w-fit sm:min-w-[26rem] sm:flex-row sm:items-stretch sm:divide-x-2 sm:divide-y-0">
+      <div className="flex items-center justify-between gap-2 bg-income/10 px-4 py-2.5 sm:flex-col sm:justify-center sm:gap-1 sm:border-r-2 sm:border-border sm:px-5 sm:py-3">
         <div className="flex items-center gap-1.5 text-income">
           <TrendingUp className="size-3.5 shrink-0" />
           <span className="font-heading text-xs font-bold uppercase tracking-wider">{m.chart_legend_income()}</span>
         </div>
-        <span className="font-heading text-base font-bold text-income sm:text-xl tabular-nums">
+        <span className="whitespace-nowrap font-heading text-base font-bold text-income sm:text-xl tabular-nums">
           {formatCurrency(income, code)}
         </span>
       </div>
-      <div className="flex items-center justify-between gap-2 bg-expense/10 px-4 py-2.5 sm:flex-col sm:justify-center sm:gap-1 sm:border-r-2 sm:border-border sm:px-4 sm:py-3">
+      <div className="flex items-center justify-between gap-2 bg-expense/10 px-4 py-2.5 sm:flex-col sm:justify-center sm:gap-1 sm:border-r-2 sm:border-border sm:px-5 sm:py-3">
         <div className="flex items-center gap-1.5 text-expense">
           <TrendingDown className="size-3.5 shrink-0" />
           <span className="font-heading text-xs font-bold uppercase tracking-wider">{m.chart_legend_expense()}</span>
         </div>
-        <span className="font-heading text-base font-bold text-expense sm:text-xl tabular-nums">
+        <span className="whitespace-nowrap font-heading text-base font-bold text-expense sm:text-xl tabular-nums">
           {formatCurrency(expense, code)}
         </span>
       </div>
-      <div className="flex items-center justify-between gap-2 bg-muted/40 px-4 py-2.5 sm:flex-col sm:justify-center sm:gap-1 sm:px-4 sm:py-3">
+      <div className="flex items-center justify-between gap-2 bg-muted/40 px-4 py-2.5 sm:flex-col sm:justify-center sm:gap-1 sm:px-5 sm:py-3">
         <div className="flex items-center gap-1.5 text-muted-foreground">
           <Wallet className="size-3.5 shrink-0" />
           <span className="font-heading text-xs font-bold uppercase tracking-wider">
@@ -223,7 +227,7 @@ function SummaryCard({
           </span>
         </div>
         <span
-          className={`font-heading text-base font-bold tabular-nums sm:text-xl ${net >= 0 ? 'text-income' : 'text-expense'}`}
+          className={`whitespace-nowrap font-heading text-base font-bold tabular-nums sm:text-xl ${net >= 0 ? 'text-income' : 'text-expense'}`}
         >
           {net >= 0 ? '+' : '−'}
           {formatCurrency(Math.abs(net), code)}
