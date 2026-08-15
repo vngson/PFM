@@ -112,7 +112,7 @@ export function BudgetForm({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={triggerButton as React.ReactElement} />
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+      <DialogContent className="overflow-y-auto sm:max-h-[90vh] sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
             {isEdit ? m.budgets_form_edit_title() : m.budgets_form_create_title()}

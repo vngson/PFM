@@ -135,7 +135,7 @@ export function CategoryForm({
       {showTrigger ? (
         <DialogTrigger render={triggerButton as React.ReactElement} />
       ) : null}
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="overflow-y-auto sm:max-h-[90vh] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
             {isEdit ? m.categories_form_edit_title() : m.categories_form_create_title()}

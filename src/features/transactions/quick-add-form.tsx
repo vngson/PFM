@@ -127,7 +127,7 @@ export function QuickAddForm({ accounts, categories }: QuickAddFormProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>{m.quick_add_dialog_title()}</DialogTitle>
           <DialogDescription>

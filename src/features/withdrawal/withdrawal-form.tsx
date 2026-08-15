@@ -220,7 +220,7 @@ export function WithdrawalForm({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={triggerButton as React.ReactElement} />
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+      <DialogContent className="overflow-y-auto sm:max-h-[90vh] sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{m.withdrawal_form_title()}</DialogTitle>
           <DialogDescription>{m.withdrawal_form_desc()}</DialogDescription>

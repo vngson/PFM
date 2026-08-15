@@ -114,7 +114,7 @@ export function AccountForm({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       {hideTrigger ? null : <DialogTrigger render={triggerButton as React.ReactElement} />}
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="overflow-y-auto sm:max-h-[90vh] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
             {isEdit ? m.accounts_form_edit_title() : m.accounts_form_create_title()}
