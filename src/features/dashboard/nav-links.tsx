@@ -32,7 +32,8 @@ export function NavLinks() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-nowrap items-center gap-2">
+    <nav aria-label="Main" className="hidden flex-nowrap items-center gap-2 md:flex">
+      {/* Ẩn <md — MobileNav bottom bar đã chứa nav chính. */}
       {links.map((link) => {
         const Icon = link.icon;
         const localizedHref = buildLocalizedHref(link.href, getLocale());
