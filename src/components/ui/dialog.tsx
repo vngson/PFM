@@ -56,7 +56,17 @@ function DialogContent({
           // Mobile: centered modal với margin 1rem mỗi cạnh — không full-screen.
           // User yêu cầu dialog phải có margin top/bottom/left/right đủ nhìn,
           // thay vì full-screen sheet đè hết viewport trên mobile nhỏ.
-          "fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100dvh-2rem)] max-w-[calc(100vw-2rem)] w-full -translate-x-1/2 -translate-y-1/2 gap-4 border-4 border-border bg-popover p-4 text-sm text-popover-foreground shadow-brutal-lg overflow-y-auto outline-none",
+          //
+          // === Fit-content (UI-UX ProMax) ===
+          // overflow-hidden (không auto) + max-h theo viewport → dialog tự
+          // co theo content; khi content quá dài cho viewport, scroll xảy
+          // ra trên inner section (thêm `flex-1 overflow-y-auto` vào child).
+          // Tránh hiện tượng: user drag popup → browser bật scrollbar
+          // overlay → content shift 1px → "nội dung bị di chuyển".
+          //
+          // overscroll-contain chặn scroll chain ra ngoài backdrop.
+          // touch-pan-y cho phép pan gesture dọc cho inner scroll.
+          "fixed top-1/2 left-1/2 z-50 flex flex-col max-h-[calc(100dvh-2rem)] max-w-[calc(100vw-2rem)] w-full -translate-x-1/2 -translate-y-1/2 gap-4 border-4 border-border bg-popover p-4 text-sm text-popover-foreground shadow-brutal-lg overflow-hidden overscroll-contain touch-pan-y outline-none",
           // Desktop: max-w-md centered, padding rộng hơn.
           "sm:h-auto sm:max-h-[90vh] sm:max-w-md sm:p-6",
           className
