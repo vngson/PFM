@@ -6,16 +6,20 @@
 // Xoá không mở dialog được. Lift state lên wrapper này, page-level <CategoryForm />
 // ở page.tsx nhận controlled props.
 //
-// Khi dùng:
-// - Page header "Tạo danh mục" button → setEditingCategory cho Category mới
-//   (category prop = undefined → mode create).
-// - List row "Sửa" button → setEditingCategory(cat).
+// Mobile layout (<md):
+// - Header KHÔNG sticky (sticky chiếm quá nhiều space trên viewport 390px).
+// - Tạo danh mục button full-width ngay sau title block (primary CTA rõ ràng).
+// - Export button ẩn trên mobile (chỉ desktop ≥md).
+// Desktop (≥md):
+// - Header sticky top, Tạo danh mục + Export cạnh title.
 import { useState, type ReactNode } from 'react';
 import { Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { CategoryForm } from './category-form';
 import { CategoryList } from './category-list';
+import { ExportButton } from '@/features/export/export-button';
+import { exportCategoriesCSV } from '@/features/export/actions';
 import type { Category } from '@/types/database';
 import * as m from '@/paraglide/messages';
 
@@ -36,15 +40,26 @@ export function CategoryPageSections({ categories, header }: CategoryPageSection
   const openEdit = (cat: Category) => setEditingCategory(cat);
 
   return (
-    <div className="space-y-6">
-      {/* Header sticky: server page render title + subtitle + Export button; wrapper
-          render nút "Tạo danh mục" cạnh Export. Khi click → mở dialog chung. */}
-      <div className="sticky top-0 z-20 -mx-6 border-b-2 border-border bg-background px-6 py-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex-1">{header}</div>
-          <Button className="gap-1.5" onClick={openCreate}>
+    <div className="space-y-4 md:space-y-6">
+      {/* Header: server page render title + subtitle. Mobile: full-width bình
+          thường (không sticky). Desktop: sticky top-0 để scroll trong table
+          vẫn thấy title + actions. */}
+      <div className="md:sticky md:top-0 md:z-20 md:-mx-6 md:border-b-2 md:border-border md:bg-background md:px-6 md:py-4">
+        <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-3">
+          <div className="min-w-0 flex-1">{header}</div>
+          {/* Mobile: full-width primary CTA ngay sau header (44pt+ touch target).
+              Desktop: inline button cạnh title. */}
+          <Button
+            className="h-11 w-full gap-1.5 md:h-10 md:w-auto"
+            onClick={openCreate}
+            aria-label={m.categories_create_btn()}
+          >
             <Plus className="size-4" /> {m.categories_create_btn()}
           </Button>
+          {/* Desktop-only Export — desktop có nhiều screen space, mobile hide. */}
+          <div className="hidden md:block">
+            <ExportButton action={exportCategoriesCSV} />
+          </div>
         </div>
       </div>
 

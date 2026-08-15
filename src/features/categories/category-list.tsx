@@ -1,8 +1,7 @@
 'use client';
 
 // CategoryList: bảng category với 2 tabs (Chi tiêu / Thu nhập).
-// Click tab → lọc table theo type tương ứng. Header bảng sticky khi scroll
-// (TableHead có `sticky top-0 z-10 bg-secondary/40`).
+// Click tab → lọc table theo type tương ứng.
 //
 // Mỗi row có:
 //   - icon box màu + tên (full, không truncate)
@@ -11,6 +10,13 @@
 //
 // CategoryForm / AlertDialog render 1 lần ở root, controlled bởi editingCategory
 // / deletingCategory, để lifecycle không bị ảnh hưởng bởi table re-render.
+//
+// Mobile (<md) layout:
+// - Tab bar full-width 50/50 (giảm tab padding, badge count nhỏ gọn).
+// - Card list 2-column: icon + name+meta | ⋮ menu. Tăng touch target 44pt+
+//   cho menu button. Usage count nhỏ dưới tên (muted) thay vì dùng badge
+//   "GD/NS/ĐK" dài dòng.
+// Desktop (≥md): giữ table nguyên bản.
 
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import {
@@ -26,12 +32,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import {
-  ListCard,
-  ListCardHeader,
-  ListCardMeta,
-  ListCardFooter,
-} from '@/components/ui/list-card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -153,13 +153,15 @@ export function CategoryList({ categories, onEditCategory }: CategoryListProps) 
   ];
 
   return (
-    <div className="space-y-4">
-      {/* Tab bar — segmented neo-brutal style. Flow bình thường trong page
-          (không sticky) để scroll toàn trang gọn. Sticky chỉ ở page header. */}
+    <div className="space-y-3 md:space-y-4">
+      {/* Tab bar — segmented neo-brutal style.
+          Mobile: flex-1 mỗi tab để chia đều 50% viewport width, padding nhỏ
+          (px-3 thay vì px-4) để chừa chỗ cho icon + label + count badge.
+          Desktop: inline-flex với padding lớn hơn. */}
       <div
         role="tablist"
         aria-label={m.categories_group_expense() + ' / ' + m.categories_group_income()}
-        className="inline-flex border-2 border-border bg-card shadow-brutal-sm"
+        className="flex w-full border-2 border-border bg-card shadow-brutal-sm md:inline-flex md:w-auto"
       >
         {TABS.map((tab, idx) => {
           const Icon = tab.icon;
@@ -173,16 +175,23 @@ export function CategoryList({ categories, onEditCategory }: CategoryListProps) 
               aria-controls="category-table"
               onClick={() => setActiveTab(tab.key)}
               className={cn(
-                'inline-flex h-10 items-center gap-2 px-4 font-heading text-xs font-bold uppercase tracking-wider transition-all',
+                'inline-flex h-11 flex-1 items-center justify-center gap-1.5 px-3 font-heading text-xs font-bold uppercase tracking-wider transition-all md:h-10 md:flex-none md:gap-2 md:px-4',
                 idx > 0 && 'border-l-2 border-border',
                 isActive
                   ? 'bg-secondary text-secondary-foreground'
                   : 'bg-card hover:bg-secondary/40',
               )}
             >
-              <Icon className="size-4" />
-              {tab.label}
-              <Badge variant={tab.key === 'income' ? 'income' : 'expense'}>{tab.count}</Badge>
+              <Icon className="size-4 shrink-0" />
+              <span className="truncate">{tab.label}</span>
+              {/* Count badge — size sm (h-5) trên mobile, default ≥md. */}
+              <Badge
+                variant={tab.key === 'income' ? 'income' : 'expense'}
+                size="sm"
+                className="min-w-5 justify-center px-1.5"
+              >
+                {tab.count}
+              </Badge>
             </button>
           );
         })}
@@ -205,53 +214,61 @@ export function CategoryList({ categories, onEditCategory }: CategoryListProps) 
               {visible.map((cat) => {
                 const CatIcon = getIcon(cat.icon_name);
                 const usage = usageMap[cat.id];
+                const totalUsage = usage
+                  ? usage.txn + usage.budget + usage.recurring
+                  : null;
                 return (
-                  <ListCard key={cat.id}>
-                    <ListCardHeader>
-                      <div
-                        className="flex size-10 shrink-0 items-center justify-center border-2 border-border text-white"
-                        style={{ backgroundColor: cat.color }}
+                  <div
+                    key={cat.id}
+                    className="flex items-center gap-3 border-2 border-border bg-card p-3 shadow-brutal-sm"
+                  >
+                    {/* Icon box — 48px cho touch-friendly scan + neo-brutal */}
+                    <div
+                      className="flex size-12 shrink-0 items-center justify-center border-2 border-border text-white"
+                      style={{ backgroundColor: cat.color }}
+                      aria-hidden="true"
+                    >
+                      <CatIcon className="size-6" />
+                    </div>
+                    {/* Name + usage count */}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-heading text-sm font-bold uppercase tracking-wide">
+                        {cat.name}
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {totalUsage === null
+                          ? m.categories_usage_loading()
+                          : totalUsage === 0
+                            ? m.categories_usage_no_txn()
+                            : `${totalUsage} ${m.categories_group_expense().toLowerCase()}`}
+                      </p>
+                    </div>
+                    {/* Action menu — 44pt touch target */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        render={
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={m.categories_actions_aria({ name: cat.name })}
+                          />
+                        }
                       >
-                        <CatIcon className="size-5" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <span className="block truncate font-heading font-bold uppercase tracking-wide">
-                          {cat.name}
-                        </span>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          render={
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              aria-label={m.categories_actions_aria({ name: cat.name })}
-                            />
-                          }
+                        <MoreVertical className="size-5" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => onEditCategory(cat)}>
+                          <Pencil className="size-4" /> {m.common_edit()}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => setDeletingCategory(cat)}
                         >
-                          <MoreVertical className="size-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => onEditCategory(cat)}>
-                            <Pencil className="size-4" /> {m.common_edit()}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onClick={() => setDeletingCategory(cat)}
-                          >
-                            <Trash2 className="size-4" /> {m.common_delete()}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </ListCardHeader>
-                    <ListCardMeta>
-                      {usage ? (
-                        <UsageBadge usage={usage} />
-                      ) : (
-                        <span>{m.categories_usage_loading()}</span>
-                      )}
-                    </ListCardMeta>
-                  </ListCard>
+                          <Trash2 className="size-4" /> {m.common_delete()}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 );
               })}
             </div>
