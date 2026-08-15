@@ -67,41 +67,52 @@ export function MobileNav() {
         className="pointer-events-auto border-t-2 border-border bg-card shadow-[0_-4px_0_0_var(--border)]"
       >
         {/* Full-width bar — không max-w-md để 4 nav chính chia đều
-           mọi viewport. FAB tách hẳn ra khỏi bar (fixed bên dưới). */}
+           mọi viewport. FAB tách hẳn ra khỏi bar (fixed bên dưới).
+
+           === Icon-only on mobile ===
+           UI-UX ProMax Mobile Bottom Nav: tiếng Anh "Transactions"/"Accounts"
+           dài 12+ chars, label visible tràn sang tab kế trên viewport 390px
+           (chia 4 = ~73px/tab). Material Design + Apple HIG đều khuyến nghị
+           icon-only cho mobile bottom nav, label hiện qua tooltip (title)
+           + aria-label cho a11y (screen reader). Active state vẫn dùng
+           inner pill giữ layout slot ổn định, không jump. */}
         <div className="flex w-full items-end justify-between px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
           {links.map((link) => {
             const Icon = link.icon;
             const localizedHref = buildLocalizedHref(link.href, getLocale());
             const active = pathname === localizedHref || pathname?.startsWith(localizedHref + '/');
+            const label = link.label();
             return (
               <Link
                 key={link.href}
                 href={localizedHref}
                 aria-current={active ? 'page' : undefined}
+                aria-label={label}
+                title={label}
                 className={cn(
-                  // Container luôn giữ layout ổn định; active style đi vào inner pill
-                  // để tránh layout shift giữa active ↔ inactive.
-                  'flex min-h-12 min-w-12 flex-1 flex-col items-center justify-center px-1 py-1.5',
+                  // 48pt touch target (Apple HIG). flex-1 để 4 nav chia đều.
+                  'flex min-h-12 flex-1 items-center justify-center px-1 py-1.5',
                 )}
               >
-                {/* Inner pill — neo-brutalism giống PC: bg vàng + border đen.
-                    Inactive: border-2 transparent để giữ layout slot, không jump. */}
+                {/* Inner pill — neo-brutalism: bg vàng active, border đen.
+                    Border-2 transparent ở inactive giữ slot không shift.
+                    Icon-only nhưng visible label có thể quay lại bằng cách
+                    thêm text-[10px] + truncate 1 dòng nếu sau này muốn. */}
                 <span
                   className={cn(
-                    'inline-flex items-center gap-1.5 rounded-md border-2 px-2.5 py-1.5 font-heading text-[10px] font-bold uppercase tracking-wider transition-all motion-safe:active:scale-95',
+                    'inline-flex size-12 items-center justify-center rounded-md border-2 transition-all motion-safe:active:scale-95',
                     active
-                      ? 'border-border bg-secondary text-secondary-foreground'
+                      ? 'border-border bg-secondary text-secondary-foreground shadow-brutal-sm'
                       : 'border-transparent text-muted-foreground',
                   )}
                 >
                   <Icon
                     className={cn(
-                      'size-5 shrink-0',
+                      'size-6 shrink-0',
                       active ? 'text-secondary-foreground' : 'text-muted-foreground',
                     )}
                     aria-hidden
                   />
-                  <span>{link.label()}</span>
                 </span>
               </Link>
             );
