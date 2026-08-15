@@ -254,6 +254,8 @@
   "search_empty_for_query": "No results for \"{query}\".",
   "search_typing_hint": "Type to start searching",
   "search_suggestions_title": "Suggestions",
+  "search_actions_title": "Actions",
+  "search_action_aria": "Enter",
   "search_suggestion_txn": "Transactions by note",
   "search_suggestion_account": "Accounts by name",
   "search_suggestion_category": "Categories by name",

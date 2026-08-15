@@ -127,15 +127,6 @@ export function QuickAddForm({ accounts, categories }: QuickAddFormProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <Button
-        onClick={() => setOpen(true)}
-        size="lg"
-        className="fixed bottom-6 right-6 z-40 hidden gap-2 shadow-brutal-lg md:inline-flex"
-        aria-label={m.quick_add_aria()}
-      >
-        <Zap className="size-5" /> {m.quick_add_btn()}
-      </Button>
-
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>{m.quick_add_dialog_title()}</DialogTitle>

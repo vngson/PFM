@@ -254,6 +254,8 @@
   "search_empty_for_query": "Không tìm thấy kết quả cho \"{query}\".",
   "search_typing_hint": "Gõ để bắt đầu tìm",
   "search_suggestions_title": "Gợi ý",
+  "search_actions_title": "Hành động",
+  "search_action_aria": "Enter",
   "search_suggestion_txn": "Giao dịch theo ghi chú",
   "search_suggestion_account": "Tài khoản theo tên",
   "search_suggestion_category": "Danh mục theo tên",

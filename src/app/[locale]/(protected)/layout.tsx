@@ -54,7 +54,7 @@ export default async function ProtectedLayout({
   return (
     <div className="flex min-h-svh flex-1 flex-col">
       <header className="border-b-4 border-border bg-card shadow-brutal">
-        <div className="mx-auto flex max-w-6xl flex-nowrap items-center justify-between gap-3 whitespace-nowrap px-6 py-3">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 lg:flex-nowrap lg:whitespace-nowrap lg:px-6">
           <div className="flex items-center gap-4 md:gap-6 shrink-0">
             <BrandLogo />
             <NavLinks />

@@ -14,6 +14,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import {
+  MoreVertical,
   Trash2,
   Pencil,
   Tag,
@@ -25,6 +26,18 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import {
+  ListCard,
+  ListCardHeader,
+  ListCardMeta,
+  ListCardFooter,
+} from '@/components/ui/list-card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -186,74 +199,133 @@ export function CategoryList({ categories, onEditCategory }: CategoryListProps) 
             })}
           </div>
         ) : (
-          // Scroll toàn page (không nested scroll trong table). Sticky header của
-          // page đã lo phần "header luôn thấy"; table chỉ là document flow bình thường.
-          <Table className="table-fixed">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[55%]">
-                  {m.categories_table_name()}
-                </TableHead>
-                <TableHead className="w-[25%]">
-                  {m.categories_table_usage()}
-                </TableHead>
-                <TableHead className="w-[20%] text-right"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          <>
+            {/* Mobile card view (<md) */}
+            <div className="space-y-2 md:hidden">
               {visible.map((cat) => {
                 const CatIcon = getIcon(cat.icon_name);
                 const usage = usageMap[cat.id];
                 return (
-                  <TableRow key={cat.id}>
-                    <TableCell className="!whitespace-normal align-top">
-                      <div className="flex items-start gap-3">
-                        <div
-                          className="flex size-9 shrink-0 items-center justify-center border-2 border-border text-white"
-                          style={{ backgroundColor: cat.color }}
-                        >
-                          <CatIcon className="size-4" />
-                        </div>
-                        <span className="font-heading font-bold uppercase leading-tight tracking-wide">
+                  <ListCard key={cat.id}>
+                    <ListCardHeader>
+                      <div
+                        className="flex size-10 shrink-0 items-center justify-center border-2 border-border text-white"
+                        style={{ backgroundColor: cat.color }}
+                      >
+                        <CatIcon className="size-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate font-heading font-bold uppercase tracking-wide">
                           {cat.name}
                         </span>
                       </div>
-                    </TableCell>
-                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={m.categories_actions_aria({ name: cat.name })}
+                            />
+                          }
+                        >
+                          <MoreVertical className="size-4" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => onEditCategory(cat)}>
+                            <Pencil className="size-4" /> {m.common_edit()}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => setDeletingCategory(cat)}
+                          >
+                            <Trash2 className="size-4" /> {m.common_delete()}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </ListCardHeader>
+                    <ListCardMeta>
                       {usage ? (
                         <UsageBadge usage={usage} />
                       ) : (
-                        <span className="text-muted-foreground">
-                          {m.categories_usage_loading()}
-                        </span>
+                        <span>{m.categories_usage_loading()}</span>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          aria-label={m.categories_actions_aria({ name: cat.name })}
-                          onClick={() => onEditCategory(cat)}
-                        >
-                          <Pencil className="size-3.5" /> {m.common_edit()}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          aria-label={m.categories_actions_aria({ name: cat.name })}
-                          onClick={() => setDeletingCategory(cat)}
-                          data-destructive="true"
-                        >
-                          <Trash2 className="size-3.5" /> {m.common_delete()}
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                    </ListCardMeta>
+                  </ListCard>
                 );
               })}
-            </TableBody>
-          </Table>
+            </div>
+
+            {/* Desktop table view (≥md) */}
+            <div className="hidden md:block">
+              <Table className="table-fixed">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[55%]">
+                      {m.categories_table_name()}
+                    </TableHead>
+                    <TableHead className="w-[25%]">
+                      {m.categories_table_usage()}
+                    </TableHead>
+                    <TableHead className="w-[20%] text-right"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {visible.map((cat) => {
+                    const CatIcon = getIcon(cat.icon_name);
+                    const usage = usageMap[cat.id];
+                    return (
+                      <TableRow key={cat.id}>
+                        <TableCell className="!whitespace-normal align-top">
+                          <div className="flex items-start gap-3">
+                            <div
+                              className="flex size-9 shrink-0 items-center justify-center border-2 border-border text-white"
+                              style={{ backgroundColor: cat.color }}
+                            >
+                              <CatIcon className="size-4" />
+                            </div>
+                            <span className="font-heading font-bold uppercase leading-tight tracking-wide">
+                              {cat.name}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {usage ? (
+                            <UsageBadge usage={usage} />
+                          ) : (
+                            <span className="text-muted-foreground">
+                              {m.categories_usage_loading()}
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              aria-label={m.categories_actions_aria({ name: cat.name })}
+                              onClick={() => onEditCategory(cat)}
+                            >
+                              <Pencil className="size-3.5" /> {m.common_edit()}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              aria-label={m.categories_actions_aria({ name: cat.name })}
+                              onClick={() => setDeletingCategory(cat)}
+                              data-destructive="true"
+                            >
+                              <Trash2 className="size-3.5" /> {m.common_delete()}
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </>
         )}
       </div>
 

@@ -13,6 +13,7 @@ import {
   Tag,
   Loader2,
   CornerDownLeft,
+  Zap,
 } from 'lucide-react';
 
 import {
@@ -125,16 +126,37 @@ export function CommandPalette({
     router.push(r.href);
   };
 
+  // Quick Add action item — cùng pattern arrow-key với search results nhưng
+  // dispatch event thay vì navigate. Chỉ hiện khi query rỗng (palette mở mà
+  // user chưa gõ gì). Mobile FAB vẫn là primary; đây là desktop fallback
+  // sau khi bỏ floating FAB ở quick-add-form.
+  const QUICK_ADD_ID = '__quick_add__';
+  const showQuickAdd = query.trim().length === 0;
+  const totalItems = (showQuickAdd ? 1 : 0) + flat.length;
+
+  const handleOpenQuickAdd = () => {
+    setOpen(false);
+    // queueMicrotask để palette đóng xong rồi mới dispatch — tránh race
+    // với dialog open animation.
+    queueMicrotask(() => {
+      window.dispatchEvent(new CustomEvent('pfm:open-quick-add'));
+    });
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setActiveIdx((i) => Math.min(i + 1, flat.length - 1));
+      setActiveIdx((i) => Math.min(i + 1, totalItems - 1));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setActiveIdx((i) => Math.max(i - 1, 0));
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      const r = flat[activeIdx];
+      if (showQuickAdd && activeIdx === 0) {
+        handleOpenQuickAdd();
+        return;
+      }
+      const r = flat[activeIdx - (showQuickAdd ? 1 : 0)];
       if (r) handleSelect(r);
     } else if (e.key === 'Escape') {
       setOpen(false);
@@ -233,7 +255,40 @@ export function CommandPalette({
 
         <div className="flex-1 overflow-y-auto p-2">
           {query.trim().length === 0 ? (
-            <EmptyState />
+            <div className="space-y-3">
+              {/* Actions — Quick Add (desktop fallback cho floating FAB đã bỏ) */}
+              <div className="space-y-1">
+                <p className="px-2 font-heading text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  {m.search_actions_title()}
+                </p>
+                <ul className="space-y-0.5">
+                  <li>
+                    <button
+                      type="button"
+                      onClick={handleOpenQuickAdd}
+                      onMouseEnter={() => setActiveIdx(0)}
+                      className={cn(
+                        'flex w-full items-center gap-3 border-2 px-2 py-2 text-left transition-colors',
+                        activeIdx === 0
+                          ? 'border-border bg-secondary text-secondary-foreground shadow-brutal-sm'
+                          : 'border-transparent bg-transparent hover:bg-muted',
+                      )}
+                    >
+                      <div className="inline-flex size-7 shrink-0 items-center justify-center border-2 border-border bg-card">
+                        <Zap className="size-3.5" />
+                      </div>
+                      <span className="truncate font-heading text-sm font-bold uppercase tracking-wide">
+                        {m.quick_add_btn()}
+                      </span>
+                      <span className="ml-auto shrink-0 font-mono text-xs text-muted-foreground">
+                        {m.search_action_aria()}
+                      </span>
+                    </button>
+                  </li>
+                </ul>
+              </div>
+              <EmptyState />
+            </div>
           ) : loading && flat.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
               {m.search_loading()}

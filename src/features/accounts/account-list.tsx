@@ -5,7 +5,7 @@
 // Actions (Sửa / Lưu trữ / Xoá) gọi stopPropagation để không trigger navigation.
 // Neo-brutalism: icon box vuông + bordered table + uppercase small labels.
 import { useState, useTransition } from 'react';
-import { Archive, Trash2, Pencil, Wallet } from 'lucide-react';
+import { Archive, MoreVertical, Trash2, Pencil, Wallet } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,17 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  ListCard,
+  ListCardHeader,
+  ListCardFooter,
+} from '@/components/ui/list-card';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -98,21 +109,14 @@ export function AccountList({ accounts }: AccountListProps) {
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>{m.accounts_table_name()}</TableHead>
-          <TableHead>{m.accounts_table_type()}</TableHead>
-          <TableHead className="text-right">{m.accounts_table_balance()}</TableHead>
-          <TableHead className="w-44 text-right"></TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
+    <>
+      {/* Mobile card view (<md) */}
+      <div className="space-y-2 md:hidden">
         {accounts.map((acc) => {
           const Icon = getIcon(acc.icon_name);
           return (
-            <TableRow key={acc.id} className="group">
-              <TableCell>
+            <ListCard key={acc.id}>
+              <ListCardHeader>
                 <Link
                   href={buildLocalizedHref(`/accounts/${acc.id}`, getLocale())}
                   className="flex items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -123,61 +127,141 @@ export function AccountList({ accounts }: AccountListProps) {
                   >
                     <Icon className="size-5" />
                   </div>
-                  <span className="font-heading font-bold uppercase tracking-wide group-hover:underline">
-                    {acc.name}
-                  </span>
+                  <div className="min-w-0 flex-1">
+                    <span className="block truncate font-heading font-bold uppercase tracking-wide">
+                      {acc.name}
+                    </span>
+                    <Badge variant="secondary" className="mt-0.5">{TYPE_LABELS[acc.type]()}</Badge>
+                  </div>
                 </Link>
-              </TableCell>
-              <TableCell>
-                <Link
-                  href={buildLocalizedHref(`/accounts/${acc.id}`, getLocale())}
-                  className="inline-block focus-visible:ring-2 focus-visible:ring-ring"
-                  aria-label={TYPE_LABELS[acc.type]()}
-                >
-                  <Badge variant="secondary">{TYPE_LABELS[acc.type]()}</Badge>
-                </Link>
-              </TableCell>
-              <TableCell className="text-right font-heading text-base font-bold">
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={m.accounts_actions_aria()}
+                      />
+                    }
+                  >
+                    <MoreVertical className="size-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setEditingAccount(acc)}>
+                      <Pencil className="size-4" /> {m.common_edit()}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleArchive(acc.id)}>
+                      <Archive className="size-4" /> {m.common_archive()}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => setDeletingAccount(acc)}
+                    >
+                      <Trash2 className="size-4" /> {m.common_delete()}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </ListCardHeader>
+              <ListCardFooter>
                 <Link
                   href={buildLocalizedHref(`/accounts/${acc.id}`, getLocale())}
                   className="block focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  {formatCurrency(acc.current_balance, acc.currency_code)}
+                  <span className="font-heading text-base font-bold">
+                    {formatCurrency(acc.current_balance, acc.currency_code)}
+                  </span>
                 </Link>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center justify-end gap-1.5">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    aria-label={m.accounts_actions_aria()}
-                    onClick={() => setEditingAccount(acc)}
-                  >
-                    <Pencil className="size-3.5" /> {m.common_edit()}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    aria-label={m.accounts_actions_aria()}
-                    onClick={() => handleArchive(acc.id)}
-                  >
-                    <Archive className="size-3.5" /> {m.common_archive()}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    aria-label={m.accounts_actions_aria()}
-                    onClick={() => setDeletingAccount(acc)}
-                    data-destructive="true"
-                  >
-                    <Trash2 className="size-3.5" /> {m.common_delete()}
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
+              </ListCardFooter>
+            </ListCard>
           );
         })}
-      </TableBody>
+      </div>
+
+      {/* Desktop table view (≥md) */}
+      <div className="hidden md:block">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{m.accounts_table_name()}</TableHead>
+              <TableHead>{m.accounts_table_type()}</TableHead>
+              <TableHead className="text-right">{m.accounts_table_balance()}</TableHead>
+              <TableHead className="w-44 text-right"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {accounts.map((acc) => {
+              const Icon = getIcon(acc.icon_name);
+              return (
+                <TableRow key={acc.id} className="group">
+                  <TableCell>
+                    <Link
+                      href={buildLocalizedHref(`/accounts/${acc.id}`, getLocale())}
+                      className="flex items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <div
+                        className="flex size-10 shrink-0 items-center justify-center border-2 border-border text-white"
+                        style={{ backgroundColor: acc.color ?? '#64748b' }}
+                      >
+                        <Icon className="size-5" />
+                      </div>
+                      <span className="font-heading font-bold uppercase tracking-wide group-hover:underline">
+                        {acc.name}
+                      </span>
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <Link
+                      href={buildLocalizedHref(`/accounts/${acc.id}`, getLocale())}
+                      className="inline-block focus-visible:ring-2 focus-visible:ring-ring"
+                      aria-label={TYPE_LABELS[acc.type]()}
+                    >
+                      <Badge variant="secondary">{TYPE_LABELS[acc.type]()}</Badge>
+                    </Link>
+                  </TableCell>
+                  <TableCell className="text-right font-heading text-base font-bold">
+                    <Link
+                      href={buildLocalizedHref(`/accounts/${acc.id}`, getLocale())}
+                      className="block focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {formatCurrency(acc.current_balance, acc.currency_code)}
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center justify-end gap-1.5">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-label={m.accounts_actions_aria()}
+                        onClick={() => setEditingAccount(acc)}
+                      >
+                        <Pencil className="size-3.5" /> {m.common_edit()}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-label={m.accounts_actions_aria()}
+                        onClick={() => handleArchive(acc.id)}
+                      >
+                        <Archive className="size-3.5" /> {m.common_archive()}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-label={m.accounts_actions_aria()}
+                        onClick={() => setDeletingAccount(acc)}
+                        data-destructive="true"
+                      >
+                        <Trash2 className="size-3.5" /> {m.common_delete()}
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+
       <AccountForm
         key={editingAccount?.id ?? 'closed'}
         account={editingAccount ?? undefined}
@@ -220,6 +304,6 @@ export function AccountList({ accounts }: AccountListProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Table>
+    </>
   );
 }

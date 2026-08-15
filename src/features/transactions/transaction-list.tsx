@@ -11,6 +11,7 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   ArrowLeftRight,
+  MoreVertical,
   Trash2,
   Pencil,
   Receipt,
@@ -24,6 +25,18 @@ import {
   TableCell,
   TableRow,
 } from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  ListCard,
+  ListCardHeader,
+  ListCardMeta,
+  ListCardFooter,
+} from '@/components/ui/list-card';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -191,92 +204,180 @@ export function TransactionList({
               })}
             </span>
           </div>
-          <Table>
-            <TableBody>
-              {group.rows.map((row) => {
-                const meta = TYPE_META[row.type];
-                const CatIcon = row.category ? getIcon(row.category.icon_name) : null;
-                const AccIcon = getIcon(row.account.icon_name ?? '');
-                const sign = row.type === 'income' ? '+' : row.type === 'expense' ? '−' : '⇄';
-                return (
-                  <TableRow key={row.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="flex size-10 shrink-0 items-center justify-center border-2 border-border text-white"
-                          style={{
-                            backgroundColor:
-                              row.category?.color ??
-                              (row.type === 'income' ? '#7fb069' : row.type === 'expense' ? '#ff4d4d' : '#64748b'),
-                          }}
-                          aria-hidden="true"
-                        >
-                          {CatIcon ? (
-                            <CatIcon className="size-5" />
-                          ) : row.type === 'transfer' ? (
-                            <ArrowLeftRight className="size-5" />
-                          ) : row.type === 'income' ? (
-                            <ArrowDownLeft className="size-5" />
-                          ) : (
-                            <ArrowUpRight className="size-5" />
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                            <span className="font-heading text-sm font-bold uppercase tracking-wide">
-                              {row.category?.name ?? TYPE_META[row.type].label()}
-                            </span>
-                            <Badge variant={meta.badge}>{meta.label()}</Badge>
-                            {row.note ? (
-                              <>
-                                <span className="text-xs text-muted-foreground">·</span>
-                                <span className="text-xs italic text-muted-foreground">
-                                  {row.note}
-                                </span>
-                              </>
-                            ) : null}
-                          </div>
-                          <p className="mt-0.5 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <span
-                              className="inline-flex size-3 shrink-0 items-center justify-center border border-border"
-                              style={{ backgroundColor: row.account.color ?? '#64748b' }}
-                            >
-                              <AccIcon className="size-2 text-white" />
-                            </span>
-                            {row.account.name}
-                          </p>
-                        </div>
+
+          {/* Mobile card view (<md) */}
+          <div className="space-y-2 p-2 md:hidden">
+            {group.rows.map((row) => {
+              const meta = TYPE_META[row.type];
+              const CatIcon = row.category ? getIcon(row.category.icon_name) : null;
+              const AccIcon = getIcon(row.account.icon_name ?? '');
+              const sign = row.type === 'income' ? '+' : row.type === 'expense' ? '−' : '⇄';
+              const fallbackColor =
+                row.type === 'income' ? '#7fb069' : row.type === 'expense' ? '#ff4d4d' : '#64748b';
+              return (
+                <ListCard key={row.id}>
+                  <ListCardHeader>
+                    <div
+                      className="flex size-9 shrink-0 items-center justify-center border-2 border-border text-white"
+                      style={{ backgroundColor: row.category?.color ?? fallbackColor }}
+                      aria-hidden="true"
+                    >
+                      {CatIcon ? (
+                        <CatIcon className="size-4" />
+                      ) : row.type === 'transfer' ? (
+                        <ArrowLeftRight className="size-4" />
+                      ) : row.type === 'income' ? (
+                        <ArrowDownLeft className="size-4" />
+                      ) : (
+                        <ArrowUpRight className="size-4" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                        <span className="truncate font-heading text-sm font-bold uppercase tracking-wide">
+                          {row.category?.name ?? TYPE_META[row.type].label()}
+                        </span>
+                        <Badge variant={meta.badge}>{meta.label()}</Badge>
                       </div>
-                    </TableCell>
-                    <TableCell className={`text-right font-heading text-base font-bold ${meta.color}`}>
+                    </div>
+                    <span
+                      className={`shrink-0 font-heading text-base font-bold tabular-nums ${meta.color}`}
+                    >
                       {sign} {formatCurrency(row.amount, row.account.currency_code)}
-                    </TableCell>
-                    <TableCell className="w-28 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          aria-label={m.accounts_actions_aria()}
-                          onClick={() => setEditingTransaction(row)}
-                        >
-                          <Pencil className="size-3.5" /> {m.common_edit()}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          aria-label={m.accounts_actions_aria()}
+                    </span>
+                  </ListCardHeader>
+                  <ListCardMeta>
+                    <span className="inline-flex items-center gap-1.5">
+                      <span
+                        className="inline-flex size-3 shrink-0 items-center justify-center border border-border"
+                        style={{ backgroundColor: row.account.color ?? '#64748b' }}
+                      >
+                        <AccIcon className="size-2 text-white" />
+                      </span>
+                      {row.account.name}
+                    </span>
+                    {row.note ? <p className="italic">{row.note}</p> : null}
+                  </ListCardMeta>
+                  <ListCardFooter>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        render={
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={m.accounts_actions_aria()}
+                          />
+                        }
+                      >
+                        <MoreVertical className="size-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setEditingTransaction(row)}>
+                          <Pencil className="size-4" /> {m.common_edit()}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
                           onClick={() => setDeletingTransaction(row)}
-                          data-destructive="true"
                         >
-                          <Trash2 className="size-3.5" /> {m.common_delete()}
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                          <Trash2 className="size-4" /> {m.common_delete()}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </ListCardFooter>
+                </ListCard>
+              );
+            })}
+          </div>
+
+          {/* Desktop table view (≥md) */}
+          <div className="hidden md:block">
+            <Table>
+              <TableBody>
+                {group.rows.map((row) => {
+                  const meta = TYPE_META[row.type];
+                  const CatIcon = row.category ? getIcon(row.category.icon_name) : null;
+                  const AccIcon = getIcon(row.account.icon_name ?? '');
+                  const sign = row.type === 'income' ? '+' : row.type === 'expense' ? '−' : '⇄';
+                  return (
+                    <TableRow key={row.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="flex size-10 shrink-0 items-center justify-center border-2 border-border text-white"
+                            style={{
+                              backgroundColor:
+                                row.category?.color ??
+                                (row.type === 'income' ? '#7fb069' : row.type === 'expense' ? '#ff4d4d' : '#64748b'),
+                            }}
+                            aria-hidden="true"
+                          >
+                            {CatIcon ? (
+                              <CatIcon className="size-5" />
+                            ) : row.type === 'transfer' ? (
+                              <ArrowLeftRight className="size-5" />
+                            ) : row.type === 'income' ? (
+                              <ArrowDownLeft className="size-5" />
+                            ) : (
+                              <ArrowUpRight className="size-5" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                              <span className="font-heading text-sm font-bold uppercase tracking-wide">
+                                {row.category?.name ?? TYPE_META[row.type].label()}
+                              </span>
+                              <Badge variant={meta.badge}>{meta.label()}</Badge>
+                              {row.note ? (
+                                <>
+                                  <span className="text-xs text-muted-foreground">·</span>
+                                  <span className="text-xs italic text-muted-foreground">
+                                    {row.note}
+                                  </span>
+                                </>
+                              ) : null}
+                            </div>
+                            <p className="mt-0.5 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                              <span
+                                className="inline-flex size-3 shrink-0 items-center justify-center border border-border"
+                                style={{ backgroundColor: row.account.color ?? '#64748b' }}
+                              >
+                                <AccIcon className="size-2 text-white" />
+                              </span>
+                              {row.account.name}
+                            </p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className={`text-right font-heading text-base font-bold ${meta.color}`}>
+                        {sign} {formatCurrency(row.amount, row.account.currency_code)}
+                      </TableCell>
+                      <TableCell className="w-28 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            aria-label={m.accounts_actions_aria()}
+                            onClick={() => setEditingTransaction(row)}
+                          >
+                            <Pencil className="size-3.5" /> {m.common_edit()}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            aria-label={m.accounts_actions_aria()}
+                            onClick={() => setDeletingTransaction(row)}
+                            data-destructive="true"
+                          >
+                            <Trash2 className="size-3.5" /> {m.common_delete()}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       ))}
 
