@@ -1,17 +1,12 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { Geist, Geist_Mono, Bungee, Lexend } from "next/font/google";
+import { Geist_Mono, Bungee, Lexend } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { SkipLink } from "@/components/a11y/skip-link";
 import { baseLocale, locales } from "@/paraglide/runtime";
 import * as m from "@/paraglide/messages";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -58,7 +53,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const fontClassName = `${heading.variable} ${body.variable} ${geistSans.variable} ${geistMono.variable} h-full antialiased`;
+  const fontClassName = `${heading.variable} ${body.variable} ${geistMono.variable} h-full antialiased`;
   const htmlLang = await resolveHtmlLang();
   return (
     <html lang={htmlLang} className={fontClassName} suppressHydrationWarning>
