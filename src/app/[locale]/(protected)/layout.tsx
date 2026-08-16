@@ -62,10 +62,14 @@ export default async function ProtectedLayout({
   return (
     <div className="flex min-h-dvh flex-1 flex-col">
       <header className="border-b-4 border-border bg-card shadow-brutal">
-        {/* Mobile (<md): full-width edge-to-edge, không mx-auto / max-w.
-           ≥md: max-w-6xl centered như cũ để desktop giữ cảm giác centered header. */}
-        <div className="flex w-full flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 md:mx-auto md:max-w-6xl md:flex-nowrap md:whitespace-nowrap md:px-6">
-          <div className="flex items-center gap-4 md:gap-6 shrink-0">
+        {/* Header 1 dòng. Mobile <sm: BrandLogo chỉ "PFM" (gọn ~50px).
+           ≥sm: hiện thêm "MONEY".
+           Tablet ≥md: NavLinks hiện cùng BrandLogo.
+           ≥lg (1024px+): header center với max-w-6xl + padding rộng
+           — desktop cảm giác centered. Tablet <lg: full-width, không
+           center constraint để tránh content bị hẹp + scroll ngang. */}
+        <div className="flex w-full items-center justify-between gap-2 px-4 py-3 sm:gap-3 md:px-6 lg:mx-auto lg:max-w-6xl">
+          <div className="flex items-center gap-2 sm:gap-4 md:gap-6 shrink-0">
             <BrandLogo />
             <NavLinks />
           </div>
