@@ -34,9 +34,11 @@ export function BrandLogo({ href, className }: BrandLogoProps) {
           priority
         />
       </span>
-      <span className="font-heading text-lg font-bold uppercase tracking-wider leading-none">
+      {/* Mobile <sm: chỉ "PFM" (gọn ~50px) để vừa 344px viewport.
+          ≥sm: thêm "MONEY" subtitle bên cạnh — branding đầy đủ ở desktop. */}
+      <span className="inline-flex items-baseline gap-0 font-heading text-lg font-bold uppercase tracking-wider leading-none">
         <span className="text-primary">PFM</span>
-        <span className="ml-2 text-xs text-muted-foreground">MONEY</span>
+        <span className="ml-2 hidden text-xs text-muted-foreground sm:inline">MONEY</span>
       </span>
     </Link>
   );
