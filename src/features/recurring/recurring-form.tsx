@@ -64,14 +64,12 @@ interface RecurringFormProps {
   rule?: RecurringTransaction;
   accounts: Pick<Account, 'id' | 'name' | 'currency_code' | 'color' | 'icon_name'>[];
   categories: CategoryOption[];
-  trigger?: 'create' | 'edit';
 }
 
 export function RecurringForm({
   rule,
   accounts,
   categories,
-  trigger = 'create',
 }: RecurringFormProps) {
   const isEdit = !!rule;
   const action = isEdit

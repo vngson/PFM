@@ -55,7 +55,6 @@ const initialState: ActionState = null;
 
 interface AccountFormProps {
   account?: Account;
-  trigger?: 'create' | 'edit';
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   hideTrigger?: boolean;
@@ -63,7 +62,6 @@ interface AccountFormProps {
 
 export function AccountForm({
   account,
-  trigger = 'create',
   open: openProp,
   onOpenChange: onOpenChangeProp,
   hideTrigger = false,

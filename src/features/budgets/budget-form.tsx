@@ -32,7 +32,7 @@ import {
 import { getIcon } from '@/features/categories/icon-catalog';
 import { useDialogFormState } from '@/lib/hooks/use-dialog-form-state';
 import { notify } from '@/lib/toast';
-import type { Budget, Category } from '@/types/database';
+import type { Budget } from '@/types/database';
 import { createBudget, updateBudget, type ActionState } from './actions';
 import * as m from '@/paraglide/messages';
 
@@ -47,7 +47,6 @@ interface BudgetFormProps {
   budget?: Budget;
   categories: CategoryOption[];
   defaultMonth: string; // YYYY-MM
-  trigger?: 'create' | 'edit';
 }
 
 const initialState: ActionState = null;
@@ -58,7 +57,6 @@ export function BudgetForm({
   budget,
   categories,
   defaultMonth,
-  trigger = 'create',
 }: BudgetFormProps) {
   const isEdit = !!budget;
   const action = isEdit ? updateBudget.bind(null, budget!.id) : createBudget;
