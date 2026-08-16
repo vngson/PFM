@@ -59,7 +59,7 @@ export function MobileNav() {
     // pointer-events-auto trên nav để nav vẫn nhận tap.
     <div
       aria-hidden="false"
-      className="pointer-events-none fixed inset-0 z-40 flex flex-col justify-end md:hidden"
+      className="pointer-events-none fixed inset-0 z-40 flex flex-col justify-end lg:hidden"
       style={{ height: '100dvh' }}
     >
       <nav
@@ -143,7 +143,7 @@ export function QuickAddFab() {
     // Absolute (không flex) để bottom offset hoạt động độc lập với flex layout
     // của wrapper. pointer-events-none wrapper / auto button.
     <div
-      className="pointer-events-none fixed inset-0 z-40 md:hidden"
+      className="pointer-events-none fixed inset-0 z-40 lg:hidden"
       style={{ height: '100dvh' }}
     >
       <button
