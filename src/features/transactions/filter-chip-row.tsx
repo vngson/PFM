@@ -6,7 +6,7 @@
 // cùng user không cần filter riêng; xem giao dịch chuyển tiền ở tab account detail.
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTransition } from 'react';
-import { Receipt, ArrowDownLeft, ArrowUpRight, ListFilter } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, ListFilter } from 'lucide-react';
 
 import type { Transaction } from '@/types/database';
 import * as m from '@/paraglide/messages';

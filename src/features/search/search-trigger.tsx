@@ -24,12 +24,12 @@ export function SearchTrigger() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex h-9 items-center gap-2 border-2 border-border bg-card px-2.5 text-sm text-muted-foreground shadow-brutal-sm transition-all hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-brutal hover:text-foreground lg:px-3"
+        className="inline-flex h-9 items-center gap-2 border-2 border-border bg-card px-2.5 text-sm text-muted-foreground shadow-brutal-sm transition-all hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-brutal hover:text-foreground xl:px-3"
         aria-label={m.search_trigger_aria()}
       >
         <Search className="size-4" />
-        <span className="hidden lg:inline">{m.search_trigger_label()}</span>
-        <kbd className="ml-1 hidden border-2 border-border bg-muted px-1.5 font-mono text-[10px] uppercase tracking-wide lg:inline-block">
+        <span className="hidden xl:inline">{m.search_trigger_label()}</span>
+        <kbd className="ml-1 hidden border-2 border-border bg-muted px-1.5 font-mono text-[10px] uppercase tracking-wide xl:inline-block">
           ⌘K
         </kbd>
       </button>

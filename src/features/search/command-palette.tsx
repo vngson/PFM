@@ -130,7 +130,6 @@ export function CommandPalette({
   // dispatch event thay vì navigate. Chỉ hiện khi query rỗng (palette mở mà
   // user chưa gõ gì). Mobile FAB vẫn là primary; đây là desktop fallback
   // sau khi bỏ floating FAB ở quick-add-form.
-  const QUICK_ADD_ID = '__quick_add__';
   const showQuickAdd = query.trim().length === 0;
   const totalItems = (showQuickAdd ? 1 : 0) + flat.length;
 

@@ -5,7 +5,6 @@
 // Note: account.current_balance cập nhật tự động qua trigger trg_transactions_balance.
 
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 import * as m from '@/paraglide/messages';
 import { createClient } from '@/lib/supabase/server';
 import { transactionSchema } from './schema';

@@ -8,15 +8,23 @@ import { baseLocale, locales } from "@/paraglide/runtime";
 import * as m from "@/paraglide/messages";
 import "./globals.css";
 
+// Bungee (font-heading) + Geist_Mono (font-mono) không dùng trên first paint
+// của login — chỉ Lexend (font-body) cần preloaded. Disable preload cho 2
+// font còn lại để tránh 'preloaded but not used' warning; file vẫn được
+// load bình thường (font-display: swap) khi element tương ứng render lần
+// đầu. Mỗi font next/font preload tạo 2 link (CSS + woff2), nên tắt 2 font
+// loại bỏ 4 warnings còn lại sau khi đã drop Geist sans ở commit trước.
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  preload: false,
 });
 
 const heading = Bungee({
   variable: "--font-heading",
   subsets: ["latin", "vietnamese"],
   weight: "400",
+  preload: false,
 });
 
 const body = Lexend({
