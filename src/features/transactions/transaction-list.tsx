@@ -199,13 +199,12 @@ export function TransactionList({
             </span>
           </div>
 
-          {/* Mobile card view (<md) — 3 rows, icon gọn (24px) để nhường chỗ
-              cho Amount + ⋮ cùng dòng (row 1) mà không che nhau. */}
-          <div className="space-y-2 p-2 md:hidden">
+          {/* Mobile + tablet card view (<lg) — table dùng từ ≥lg 1024px
+              để tránh columns tràn ngang viewport 768-1023px. */}
+          <div className="space-y-2 p-2 lg:hidden">
             {group.rows.map((row) => {
               const meta = TYPE_META[row.type];
               const CatIcon = row.category ? getIcon(row.category.icon_name) : null;
-              const AccIcon = getIcon(row.account.icon_name ?? '');
               const sign = row.type === 'income' ? '+' : row.type === 'expense' ? '−' : '⇄';
               const fallbackColor =
                 row.type === 'income' ? '#7fb069' : row.type === 'expense' ? '#ff4d4d' : '#64748b';
@@ -295,8 +294,8 @@ export function TransactionList({
             })}
           </div>
 
-          {/* Desktop table view (≥md) */}
-          <div className="hidden md:block">
+          {/* Desktop table view (≥lg) */}
+          <div className="hidden lg:block">
             <Table>
               <TableBody>
                 {group.rows.map((row) => {

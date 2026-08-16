@@ -111,7 +111,7 @@ export function AccountList({ accounts }: AccountListProps) {
           - Balance tách riêng hẳn dòng dưới → không đè name, name không bị truncate vì balance
           - ⋮ absolute top-right, không chiếm layout, ≥44px tap area
           - Neo-brutalism: border-2 + shadow + uppercase heading + tabular-nums balance */}
-      <div className="space-y-2 md:hidden">
+      <div className="space-y-2 lg:hidden">
         {accounts.map((acc) => {
           const Icon = getIcon(acc.icon_name);
           return (
@@ -177,8 +177,9 @@ export function AccountList({ accounts }: AccountListProps) {
         })}
       </div>
 
-      {/* Desktop table view (≥md) */}
-      <div className="hidden md:block">
+      {/* Desktop table view (≥lg 1024px) — tablet 768-1023 dùng card view
+          để tránh table columns tràn ngang viewport (overflow scroll bar). */}
+      <div className="hidden lg:block">
         <Table>
           <TableHeader>
             <TableRow>

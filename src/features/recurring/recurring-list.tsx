@@ -194,7 +194,7 @@ export function RecurringList({
         return (
           <div
             key={row.id}
-            className={`flex flex-col gap-2 border-2 border-border bg-card p-2.5 shadow-brutal-sm transition-opacity sm:flex-row sm:items-center sm:gap-4 sm:p-4 ${
+            className={`flex flex-col gap-2 border-2 border-border bg-card p-2.5 shadow-brutal-sm transition-opacity lg:flex-row lg:items-center lg:gap-4 lg:p-4 ${
               !row.is_active ? 'opacity-60' : ''
             }`}
           >
@@ -204,7 +204,7 @@ export function RecurringList({
             <div className="flex items-start gap-2.5">
               {/* Icon block */}
               <div
-                className="flex size-10 shrink-0 items-center justify-center border-2 border-border text-white sm:size-12"
+                className="flex size-10 shrink-0 items-center justify-center border-2 border-border text-white lg:size-12"
                 style={{
                   backgroundColor:
                     row.category?.color ??
@@ -213,11 +213,11 @@ export function RecurringList({
                 aria-hidden="true"
               >
                 {CatIcon ? (
-                  <CatIcon className="size-5 sm:size-6" />
+                  <CatIcon className="size-5 lg:size-6" />
                 ) : row.type === 'income' ? (
-                  <ArrowDownLeft className="size-5 sm:size-6" />
+                  <ArrowDownLeft className="size-5 lg:size-6" />
                 ) : (
-                  <ArrowUpRight className="size-5 sm:size-6" />
+                  <ArrowUpRight className="size-5 lg:size-6" />
                 )}
               </div>
 
@@ -226,15 +226,26 @@ export function RecurringList({
                   amount đẩy); row 2 gom amount + badges cùng 1 dòng.
                   Desktop: name + meta + badges, amount render ở right column. */}
               <div className="min-w-0 flex-1">
-                {/* Row 1 — name (full width, không share row với amount). */}
-                <h3 className="font-heading text-sm font-bold uppercase leading-tight tracking-wide">
-                  {row.category?.name ?? TYPE_META[rType].label()}
-                </h3>
+                {/* Row 1 — title (trái) + amount desktop (phải) cùng baseline.
+                    Mobile: amount nằm ở row 2 (cùng badges). */}
+                <div className="flex items-baseline justify-between gap-3">
+                  <h3 className="w-full lg:w-72 font-heading text-sm font-bold uppercase leading-tight tracking-wide">
+                    {row.category?.name ?? TYPE_META[rType].label()}
+                  </h3>
+                  {/* Amount desktop inline — ẩn <lg, khi đó amount desktop
+                      column riêng phía sau info section vẫn lo. */}
+                  <span
+                    className={`hidden shrink-0 font-heading text-lg font-bold leading-tight tabular-nums lg:inline ${meta.color}`}
+                  >
+                    {row.type === 'income' ? '+' : '−'}{' '}
+                    {formatCurrency(Number(row.amount), row.account.currency_code)}
+                  </span>
+                </div>
 
                 {/* Row 2 — amount mobile cùng row với badges. Left: badges
                     (CHI/THU + frequency + paused). Right: amount (tabular-nums
                     đỏ/xanh). */}
-                <div className="mt-1 flex items-center justify-between gap-2 sm:hidden">
+                <div className="mt-1 flex items-center justify-between gap-2 lg:hidden">
                   <div className="flex flex-wrap items-center gap-1">
                     <Badge variant={meta.badge} size="sm" className="px-1.5">
                       {meta.label()}
@@ -262,7 +273,7 @@ export function RecurringList({
 
                 {/* Desktop: amount + actions render ở right column ngoài →
                     ở đây chỉ hiện badges row + meta row. */}
-                <div className="mt-1 hidden flex-wrap items-center gap-1.5 sm:flex">
+                <div className="mt-1 hidden flex-wrap items-center gap-1.5 lg:flex">
                   <Badge variant={meta.badge} size="sm" className="px-1.5">
                     {meta.label()}
                   </Badge>
@@ -315,23 +326,19 @@ export function RecurringList({
                 ) : null}
               </div>
 
-              {/* Amount — desktop bên phải (mobile đã inline ở trên). */}
-              <div
-                className={`hidden shrink-0 font-heading text-lg font-bold tabular-nums sm:block sm:text-right ${meta.color}`}
-              >
-                {row.type === 'income' ? '+' : '−'}{' '}
-                {formatCurrency(Number(row.amount), row.account.currency_code)}
-              </div>
+              {/* Amount desktop đã inline trong title row (justify-between) ở trên.
+                  Mobile dùng row badges (lg:hidden) để hiển thị amount.
+                  Không cần column riêng ở đây. */}
             </div>
 
             {/* === Actions row ===
                 Mobile: primary CTA "Sinh GD" full-width (nếu due) + dropdown
                   menu ⋮. Menu thu gọn để giảm noise + đỡ 3 button đen.
                 Desktop: 3 buttons inline (giữ nguyên behavior). */}
-            <div className="flex shrink-0 items-center gap-2 sm:ml-auto">
+            <div className="flex shrink-0 items-center gap-2 lg:ml-auto">
               {/* Mobile card view: primary CTA nổi bật + dropdown menu
-                  cho phần còn lại. Desktop: 3 buttons inline. */}
-              <div className="flex w-full items-center gap-2 md:w-auto">
+                  cho phần còn lại. Desktop ≥lg: 3 buttons inline. */}
+              <div className="flex w-full items-center gap-2 lg:w-auto">
                 {/* Sinh GD — luôn render, disable khi chưa đến hạn hoặc
                     rule đang tạm dừng. Tooltip giải thích lý do thay cho
                     text "Đang chờ..." cũ để giữ layout cố định + feature
@@ -339,7 +346,7 @@ export function RecurringList({
                 <Button
                   size="default"
                   variant="default"
-                  className="h-10 flex-1 gap-1.5 sm:h-11 md:h-10 md:flex-none disabled:opacity-50"
+                  className="h-10 flex-1 gap-1.5 sm:h-11 lg:h-10 lg:flex-none disabled:opacity-50"
                   onClick={() => handleGenerate(row.id)}
                   disabled={!canGenerate || isBusy || pending}
                   title={
@@ -354,7 +361,7 @@ export function RecurringList({
                   <Zap className="size-4" /> {m.recurring_generate_btn_short()}
                 </Button>
 
-                {/* Mobile dropdown (ẩn ≥md) */}
+                {/* Mobile + tablet dropdown (ẩn ≥lg — desktop dùng 3 buttons inline). */}
                 <DropdownMenu>
                   <DropdownMenuTrigger
                     render={
@@ -362,6 +369,7 @@ export function RecurringList({
                         variant="ghost"
                         size="icon"
                         aria-label={m.accounts_actions_aria()}
+                        className="lg:hidden"
                       />
                     }
                   >
@@ -374,7 +382,6 @@ export function RecurringList({
                           rule={row}
                           accounts={accounts}
                           categories={categories}
-                          trigger="edit"
                         />
                       }
                     />
@@ -401,13 +408,13 @@ export function RecurringList({
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                {/* Desktop buttons (ẩn <md) */}
-                <div className="hidden items-center gap-1.5 md:flex">
+                {/* Desktop buttons (ẩn <lg) — tablet dùng dropdown menu ⋮ thay vì
+                      3 button inline để tránh tràn ngang viewport 768-1023. */}
+                <div className="hidden items-center gap-1.5 lg:flex">
                   <RecurringForm
                     rule={row}
                     accounts={accounts}
                     categories={categories}
-                    trigger="edit"
                   />
                   <Button
                     variant="ghost"

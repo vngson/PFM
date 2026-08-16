@@ -3,7 +3,7 @@
 // BudgetList: list ngân sách theo tháng + progress bar spent/limit.
 // - Mỗi card: icon category, tên category, hạn mức, đã chi, progress bar.
 // - Warning khi spent >= 100% (đỏ) hoặc spent >= 80% (vàng).
-// - Actions: Sửa, Xoá (qua inline <BudgetForm trigger="edit">).
+// - Actions: Sửa, Xoá (qua inline <BudgetForm> với `budget` prop để isEdit).
 // Neo-brutalism: border + shadow + progress bar dày 4px.
 import { useState, useTransition } from 'react';
 import { AlertTriangle, Target, Trash2 } from 'lucide-react';
@@ -161,14 +161,14 @@ export function BudgetList({ budgets, categories }: BudgetListProps) {
               className="relative border-2 border-border bg-card p-4 shadow-brutal-sm"
             >
               {/* Actions — 2 button compact (icon-only) cho gọn card.
-                  Sửa dùng BudgetForm trigger="edit" (mount DialogTrigger tự động).
+                  Sửa dùng BudgetForm với `budget` prop (isEdit derive từ !!budget,
+                  mount DialogTrigger tự động).
                   pr của header chừa chỗ cho 2 button ~56px. */}
               <div className="absolute right-2 top-2 flex items-center gap-0.5">
                 <BudgetForm
                   budget={b as Budget}
                   categories={categories}
                   defaultMonth={b.period_month.slice(0, 7)}
-                  trigger="edit"
                 />
                 <Button
                   variant="ghost"

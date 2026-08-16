@@ -209,8 +209,9 @@ export function CategoryList({ categories, onEditCategory }: CategoryListProps) 
           </div>
         ) : (
           <>
-            {/* Mobile card view (<md) */}
-            <div className="space-y-2 md:hidden">
+            {/* Mobile + tablet card view (<lg) — table dùng từ ≥lg 1024px
+                  để tránh columns whitespace-nowrap tràn ngang viewport 768-1023px. */}
+            <div className="space-y-2 lg:hidden">
               {visible.map((cat) => {
                 const CatIcon = getIcon(cat.icon_name);
                 const usage = usageMap[cat.id];
@@ -273,8 +274,8 @@ export function CategoryList({ categories, onEditCategory }: CategoryListProps) 
               })}
             </div>
 
-            {/* Desktop table view (≥md) */}
-            <div className="hidden md:block">
+            {/* Desktop table view (≥lg) */}
+            <div className="hidden lg:block">
               <Table className="table-fixed">
                 <TableHeader>
                   <TableRow>
