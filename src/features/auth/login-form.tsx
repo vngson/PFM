@@ -103,10 +103,14 @@ export function LoginForm() {
           <Button type="submit" className="w-full" size="lg" disabled={pending}>
             {pending ? m.auth_login_pending() : m.auth_login_submit()}
           </Button>
-          <div className="flex w-full items-center justify-between gap-2 text-sm font-medium text-muted-foreground">
+          {/* Footer secondary actions.
+              Mobile (390px): 2 dòng riêng để "Chưa có tài khoản? Đăng ký ngay"
+              không bị wrap và đẩy "Quên mật khẩu?" xuống dòng 2.
+              ≥sm: gộp lại 1 dòng justify-between cho desktop gọn. */}
+          <div className="flex w-full flex-col items-center gap-2 text-center text-sm text-muted-foreground sm:flex-row sm:justify-between sm:gap-4 sm:text-left">
             <Link
               href={buildLocalizedHref("/forgot-password", getLocale())}
-              className="text-foreground underline decoration-2 underline-offset-4 transition-colors hover:text-primary"
+              className="font-medium text-foreground underline decoration-2 underline-offset-4 transition-colors hover:text-primary"
             >
               {m.auth_login_forgot_link()}
             </Link>
