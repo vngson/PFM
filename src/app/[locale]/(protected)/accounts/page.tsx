@@ -19,7 +19,7 @@ export default async function AccountsPage() {
   }, {});
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-6 py-8">
+    <div className="space-y-6 px-4 py-6 md:px-6 md:py-8 lg:mx-auto lg:max-w-6xl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="mb-2 inline-flex border-2 border-border bg-secondary px-3 py-1 shadow-brutal-sm">

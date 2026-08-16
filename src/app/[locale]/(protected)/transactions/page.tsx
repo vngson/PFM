@@ -76,7 +76,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
   const nextBefore = lastRow?.occurred_at.slice(0, 10);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 md:px-6 md:py-8">
+    <div className="space-y-6 px-4 py-6 md:px-6 md:py-8 lg:mx-auto lg:max-w-6xl">
       <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center md:justify-between">
         <div>
           <div className="mb-2 inline-flex border-2 border-border bg-secondary px-3 py-1 shadow-brutal-sm">

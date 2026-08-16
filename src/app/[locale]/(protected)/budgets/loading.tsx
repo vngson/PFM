@@ -4,7 +4,7 @@ import { SkeletonList } from '@/components/ui/skeleton-presets';
 
 export default function BudgetsLoading() {
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-6 py-8">
+    <div className="space-y-6 px-4 py-6 md:px-6 md:py-8 lg:mx-auto lg:max-w-6xl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="mb-2 h-6 w-24 border-2 border-border bg-muted shadow-brutal-sm" />

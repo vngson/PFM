@@ -57,7 +57,7 @@ export default async function RecurringPage() {
   const dueCount = rules.filter((r) => r.is_active && r.next_run_at <= today).length;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-3 px-4 py-4 md:space-y-6 md:px-6 md:py-8">
+    <div className="space-y-3 px-4 py-4 md:space-y-6 md:px-6 md:py-8 lg:mx-auto lg:max-w-6xl">
       {/* Compact header — mobile giảm chip + title size để viewport 390px
           hiện được ít nhất 1 card ở fold trên.
           Bỏ dòng subtitle trên mobile (chỉ desktop ≥md mới có). */}
@@ -91,7 +91,6 @@ export default async function RecurringPage() {
             <RecurringForm
               accounts={accounts}
               categories={categories}
-              trigger="create"
             />
           </div>
         </div>

@@ -39,7 +39,7 @@ export default async function AccountDetailPage({
   const nextBefore = lastRow?.occurred_at.slice(0, 10);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-6 py-8">
+    <div className="space-y-6 px-4 py-6 md:px-6 md:py-8 lg:mx-auto lg:max-w-6xl">
       <Link
         href={buildLocalizedHref('/accounts', getLocale())}
         className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"

@@ -118,7 +118,7 @@ export default async function DashboardPage() {
   const txnCount = txns?.length ?? 0;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 px-6 py-8">
+    <div className="space-y-8 px-4 py-6 md:px-6 md:py-8 lg:mx-auto lg:max-w-6xl">
       {/* Onboarding cho first-time user (0 accounts + 0 categories). */}
       <OnboardingWizard
         accounts={(fullAccounts ?? []) as never}
