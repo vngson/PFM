@@ -7,10 +7,10 @@
 //   Step 3 — nhập new password + confirm → updatePasswordAction đổi pass,
 //            signOut, redirect /login.
 //
-// State machine: 'email' | 'otp' | 'password'. Mỗi state là 1 form riêng,
-// hidden email truyền qua các step qua input hidden.
+// Step derivation (không dùng effect): bước hiện tại derived từ
+// requestState/otpState + email đã gửi. Điều này tránh setState-in-effect.
 
-import { useActionState, useEffect, useState } from 'react';
+import { useActionState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   requestPasswordResetAction,
@@ -55,9 +55,6 @@ export function ForgotPasswordForm() {
   const searchParams = useSearchParams();
   const initialEmail = searchParams.get('email') ?? '';
 
-  const [step, setStep] = useState<Step>('email');
-  const [email, setEmail] = useState(initialEmail);
-
   const [requestState, requestFormAction, requestPending] = useActionState(
     requestPasswordResetAction,
     null as RequestState,
@@ -73,20 +70,19 @@ export function ForgotPasswordForm() {
     null as PasswordState,
   );
 
-  // Step 1 → Step 2 transition: khi request trả về codeSent.
-  useEffect(() => {
-    if (requestState?.codeSent && requestState.sentEmail) {
-      setEmail(requestState.sentEmail);
-      setStep('otp');
-    }
-  }, [requestState]);
-
-  // Step 2 → Step 3 transition: khi OTP verify thành công.
-  useEffect(() => {
-    if (otpState?.otpVerified) {
-      setStep('password');
-    }
-  }, [otpState]);
+  // Derive current step + email từ action states (không cần effect).
+  // - Email step khi chưa có codeSent
+  // - OTP step khi đã codeSent + có OTP state (verify lỗi hoặc thành công)
+  // - Password step khi otpVerified
+  // Email = sentEmail mới nhất từ action (đã được server canonicalize).
+  const sentEmail = requestState?.sentEmail;
+  const email = sentEmail ?? initialEmail;
+  const step: Step =
+    passwordState !== null || otpState?.otpVerified
+      ? 'password'
+      : requestState?.codeSent
+        ? 'otp'
+        : 'email';
 
   // --- Step 1: nhập email ---
   if (step === 'email') {

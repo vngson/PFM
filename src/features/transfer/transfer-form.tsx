@@ -236,7 +236,7 @@ export function TransferForm({ accounts }: TransferFormProps) {
                 id="amount"
                 name="amount"
                 type="number"
-                step="1000"
+                step="any"
                 min="0"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}

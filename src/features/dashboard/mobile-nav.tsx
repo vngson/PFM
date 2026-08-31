@@ -1,7 +1,7 @@
 'use client';
 
 // MobileNav: bottom navigation cho mobile (< 768px). 4 nav chính +
-// 1 FAB trung tâm cho Quick Add (mở QuickAddForm).
+// 1 FAB trung tâm cho Quick Add (mở TransactionForm).
 // Giảm tải header trên mobile, tăng thumb reach.
 // Href buildLocalizedHref để URL khớp locale prefix.
 //
@@ -22,7 +22,7 @@
 // viewport bottom. Khi browser không support dvh → fallback 100vh (luôn = 844
 // = layout viewport) → bar ở đáy layout viewport (chấp nhận được trên
 // desktop và mobile browser hiện đại đều support dvh từ Safari 15.4).
-import { useEffect, useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -44,11 +44,17 @@ const links: NavLink[] = [
   { href: '/budgets', label: () => m.nav_budgets(), icon: Target },
 ];
 
+// Subscribe noop để đánh dấu "đã mount trên client". Server snapshot = false
+// (chưa mount), client snapshot = true (đã mount). Dùng useSyncExternalStore
+// thay vì useEffect + setState tránh cascading render và đúng concurrent React.
+function subscribe() {
+  return () => {};
+}
+
 export function MobileNav() {
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
   // Chỉ render portal sau khi mount trên client để tránh hydration mismatch.
-  useEffect(() => setMounted(true), []);
+  const mounted = useSyncExternalStore(subscribe, () => true, () => false);
   if (!mounted) return null;
 
   return createPortal(

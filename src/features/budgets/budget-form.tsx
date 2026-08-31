@@ -195,7 +195,7 @@ export function BudgetForm({
                 id="amount"
                 name="amount"
                 type="number"
-                step="0.01"
+                step="any"
                 min="0"
                 defaultValue={budget?.amount ?? ''}
                 placeholder="0"

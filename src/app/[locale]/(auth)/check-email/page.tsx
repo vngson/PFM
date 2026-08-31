@@ -40,7 +40,7 @@ export default async function CheckEmailPage({ searchParams }: CheckEmailPagePro
         </p>
       </CardContent>
       <CardFooter className="justify-center">
-        <Button variant="outline" render={<Link href={buildLocalizedHref("/login", getLocale())} />}>
+        <Button variant="outline" nativeButton={false} render={<Link href={buildLocalizedHref("/login", getLocale())} />}>
           {m.auth_check_email_back()}
         </Button>
       </CardFooter>

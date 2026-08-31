@@ -40,15 +40,14 @@ import {
 } from './actions';
 import * as m from '@/paraglide/messages';
 
-const TYPE_LABELS: Record<Transaction['type'], () => string> = {
-  income: () => m.transactions_type_income(),
-  expense: () => m.transactions_type_expense(),
-  transfer: () => m.transactions_type_transfer(),
-};
-
-const TYPE_ITEMS: { value: Transaction['type']; label: string }[] = (
-  Object.entries(TYPE_LABELS) as [Transaction['type'], () => string][]
-).map(([value, getLabel]) => ({ value, label: getLabel() }));
+// Dropdown chỉ cho income/expense — transfer (chuyển khoản) dùng TransferForm
+// riêng (tạo 2 row income+expense). Type 'transfer' trong enum giữ để
+// backward-compat với data cũ và cho Transaction type — không cho user tạo
+// mới qua form này.
+const TYPE_ITEMS: { value: 'income' | 'expense'; label: string }[] = [
+  { value: 'income', label: m.transactions_type_income() },
+  { value: 'expense', label: m.transactions_type_expense() },
+];
 
 // Tài khoản đầu tiên trong list dùng làm fallback khi không có default.
 const FIRST_ACCOUNT = '__first__';
@@ -104,18 +103,26 @@ export function TransactionForm({
   );
   const [categoryId, setCategoryId] = useState<string>(transaction?.category_id ?? '');
 
-  // Shake animation khi có error (giống auth form)
+  // Shake animation khi có error (giống auth form). Effect theo dõi pending
+  // transition false→true→false + state có error → trigger đúng 1 lần sau
+  // khi action submit về error. Effect này sync với external system (DOM),
+  // không phải derived state — đây là use case hợp lệ của useEffect.
   useEffect(() => {
-    if (state?.error || (state?.fieldErrors && Object.keys(state.fieldErrors).length > 0)) {
-      const el = formRef.current;
-      if (!el) return;
-      el.classList.remove('animate-brutal-shake');
-      void el.offsetWidth; // restart animation
-      el.classList.add('animate-brutal-shake');
-      const t = setTimeout(() => el.classList.remove('animate-brutal-shake'), 450);
-      return () => clearTimeout(t);
+    if (
+      pending ||
+      !state?.error ||
+      (state.fieldErrors && Object.keys(state.fieldErrors).length === 0)
+    ) {
+      return;
     }
-  }, [state]);
+    const el = formRef.current;
+    if (!el) return;
+    el.classList.remove('animate-brutal-shake');
+    void el.offsetWidth; // restart animation
+    el.classList.add('animate-brutal-shake');
+    const t = setTimeout(() => el.classList.remove('animate-brutal-shake'), 450);
+    return () => clearTimeout(t);
+  }, [pending, state]);
 
   // Auto-close dialog + toast khi submit thành công
   useEffect(() => {
@@ -125,22 +132,26 @@ export function TransactionForm({
         notify.success(isEdit ? m.transactions_update_toast() : m.transactions_create_toast());
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [closeOnSuccess, isEdit]);
 
-  // Filter category theo type (transfer không cần)
-  const filteredCategories = useMemo(() => {
-    if (type === 'transfer') return [] as CategoryOption[];
-    return categories.filter((c) => c.type === type);
-  }, [type, categories]);
+  // Filter category theo type (transfer không cần — nhưng không cho user tạo
+  // type='transfer' ở form này nữa, chỉ TransferForm riêng tạo 2 row income+expense).
+  const filteredCategories = useMemo(
+    () => categories.filter((c) => c.type === type),
+    [type, categories],
+  );
 
-  // Khi đổi type, reset category nếu không còn hợp lệ
-  useEffect(() => {
-    if (type === 'transfer') {
-      setCategoryId('');
-    } else if (categoryId && !filteredCategories.some((c) => c.id === categoryId)) {
-      setCategoryId(filteredCategories[0]?.id ?? '');
-    }
-  }, [type, filteredCategories, categoryId]);
+  // Khi đổi type, reset category nếu không còn hợp lệ. Compute derived state
+  // (effectiveCategoryId) và apply via setState in render — React sẽ skip
+  // re-render nếu giá trị không đổi (cùng pattern "derived state during
+  // render" React docs khuyến nghị).
+  const effectiveCategoryId = filteredCategories.some((c) => c.id === categoryId)
+    ? categoryId
+    : (filteredCategories[0]?.id ?? '');
+  if (effectiveCategoryId !== categoryId) {
+    setCategoryId(effectiveCategoryId);
+  }
 
   // occurred_at: mặc định hôm nay (YYYY-MM-DD)
   const defaultDate = useMemo(() => {
@@ -148,15 +159,6 @@ export function TransactionForm({
     if (v) return v.slice(0, 10);
     return new Date().toISOString().slice(0, 10);
   }, [transaction]);
-
-  // Reset state khi edit form mở với transaction mới (parent dùng key remount)
-  useEffect(() => {
-    if (open && transaction) {
-      setType(transaction.type);
-      setAccountId(transaction.account_id);
-      setCategoryId(transaction.category_id ?? '');
-    }
-  }, [open, transaction]);
 
   const fieldError = (key: string): string | undefined =>
     state?.fieldErrors?.[key]?.[0];
@@ -283,7 +285,9 @@ export function TransactionForm({
                     <SelectItem value={FIRST_ACCOUNT}>{m.transactions_no_category()}</SelectItem>
                     {filteredCategories.length === 0 ? (
                       <SelectItem value="__empty_cat__" disabled>
-                        {m.categories_no_categories_for_type({ type: TYPE_LABELS[type]().toLowerCase() })}
+                        {m.categories_no_categories_for_type({
+                          type: type === 'income' ? m.transactions_type_income() : m.transactions_type_expense(),
+                        })}
                       </SelectItem>
                     ) : (
                       filteredCategories.map((cat) => {
@@ -311,10 +315,7 @@ export function TransactionForm({
                   </p>
                 ) : null}
               </div>
-            ) : (
-              // Vẫn cần submit name=category_id với empty cho transfer; hidden input đã được reset ở effect.
-              <input type="hidden" name="category_id" value="" />
-            )}
+            ) : null}
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
@@ -323,7 +324,7 @@ export function TransactionForm({
                   id="amount"
                   name="amount"
                   type="number"
-                  step="0.01"
+                  step="any"
                   min="0"
                   defaultValue={transaction?.amount ?? ''}
                   placeholder="0"

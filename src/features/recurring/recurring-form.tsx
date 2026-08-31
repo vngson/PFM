@@ -114,12 +114,16 @@ export function RecurringForm({
     return categories.filter((c) => c.type === type);
   }, [type, categories]);
 
-  // Khi đổi type, reset category nếu không còn hợp lệ
-  useEffect(() => {
-    if (categoryId && !filteredCategories.some((c) => c.id === categoryId)) {
-      setCategoryId(filteredCategories[0]?.id ?? '');
-    }
-  }, [type, filteredCategories, categoryId]);
+  // Khi đổi type, reset category nếu không còn hợp lệ. Apply via setState in
+  // render (React pattern "adjust state during render") — React skip re-render
+  // nếu giá trị không đổi.
+  const effectiveCategoryId =
+    filteredCategories.some((c) => c.id === categoryId)
+      ? categoryId
+      : (filteredCategories[0]?.id ?? '');
+  if (effectiveCategoryId !== categoryId) {
+    setCategoryId(effectiveCategoryId);
+  }
 
   // Auto-close dialog + toast khi submit thành công
   useEffect(() => {
@@ -129,7 +133,7 @@ export function RecurringForm({
         notify.success(isEdit ? m.recurring_update_toast() : m.recurring_create_toast());
       });
     }
-  }, [closeOnSuccess, isEdit]);
+  }, [closeOnSuccess, isEdit, setOpen]);
 
   const defaultStartDate = useMemo(() => {
     if (rule?.start_date) return rule.start_date.slice(0, 10);
@@ -299,7 +303,7 @@ export function RecurringForm({
                   id="amount"
                   name="amount"
                   type="number"
-                  step="0.01"
+                  step="any"
                   min="0"
                   defaultValue={rule?.amount ?? ''}
                   placeholder="0"

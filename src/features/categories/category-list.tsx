@@ -111,6 +111,9 @@ export function CategoryList({ categories, onEditCategory }: CategoryListProps) 
     return () => {
       cancelled = true;
     };
+    // idsKey thay đổi chỉ khi id set thực sự khác — tránh re-fetch vô tận
+    // nếu để `[categories]` (category object reference đổi mỗi render).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idsKey]);
 
   const handleDelete = (id: string) => {

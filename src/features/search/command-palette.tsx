@@ -73,7 +73,7 @@ export function CommandPalette({
   const [activeIdx, setActiveIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Global Cmd/Ctrl+K
+  // Global Cmd/Ctrl+K — effect subscribe window event (external system).
   useEffect(() => {
     if (!enableShortcut) return;
     const handler = (e: KeyboardEvent) => {
@@ -84,27 +84,29 @@ export function CommandPalette({
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enableShortcut]);
 
-  // Focus input khi mở
+  // Focus input khi mở (DOM side-effect — use case hợp lệ của effect).
   useEffect(() => {
-    if (open) {
-      // Wait 1 tick để dialog render xong
-      const t = setTimeout(() => inputRef.current?.focus(), 50);
-      return () => clearTimeout(t);
-    }
+    if (!open) return;
+    const t = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => clearTimeout(t);
+  }, [open]);
+
+  // Reset khi đóng: derived từ `open` prop — không dùng effect. Áp dụng
+  // trực tiếp trong render, React skip re-render nếu giá trị không đổi.
+  if (!open && (query !== '' || activeIdx !== 0 || results.total !== 0)) {
     setQuery('');
     setResults({ transactions: [], accounts: [], categories: [], total: 0 });
     setActiveIdx(0);
-  }, [open]);
+  }
 
-  // Debounced search
+  // Debounced search — effect sync với server (external system). Chỉ fetch khi
+  // query có nội dung; empty results được derive từ query state ở render
+  // (xem `displayResults` bên dưới).
   useEffect(() => {
-    if (!open) return;
-    if (query.trim().length === 0) {
-      setResults({ transactions: [], accounts: [], categories: [], total: 0 });
-      return;
-    }
+    if (!open || query.trim().length === 0) return;
     const t = setTimeout(() => {
       startTransition(async () => {
         const r = await globalSearch(query);
@@ -113,12 +115,20 @@ export function CommandPalette({
       });
     }, DEBOUNCE_MS);
     return () => clearTimeout(t);
-  }, [query, open]);
+  }, [query, open, setResults, setActiveIdx, startTransition]);
 
+  // Khi query rỗng, kết quả search trống — derive thay vì set state trong effect.
+  const EMPTY_RESULTS = {
+    transactions: [] as SearchResult[],
+    accounts: [] as SearchResult[],
+    categories: [] as SearchResult[],
+    total: 0,
+  };
+  const displayResults = query.trim().length === 0 ? EMPTY_RESULTS : results;
   const flat: SearchResult[] = [
-    ...results.transactions,
-    ...results.accounts,
-    ...results.categories,
+    ...displayResults.transactions,
+    ...displayResults.accounts,
+    ...displayResults.categories,
   ];
 
   const handleSelect = (r: SearchResult) => {
@@ -129,7 +139,7 @@ export function CommandPalette({
   // Quick Add action item — cùng pattern arrow-key với search results nhưng
   // dispatch event thay vì navigate. Chỉ hiện khi query rỗng (palette mở mà
   // user chưa gõ gì). Mobile FAB vẫn là primary; đây là desktop fallback
-  // sau khi bỏ floating FAB ở quick-add-form.
+  // sau khi bỏ floating FAB ở quick-add-dialog.
   const showQuickAdd = query.trim().length === 0;
   const totalItems = (showQuickAdd ? 1 : 0) + flat.length;
 
@@ -219,8 +229,8 @@ export function CommandPalette({
   };
 
   const tStart = 0;
-  const aStart = results.transactions.length;
-  const cStart = aStart + results.accounts.length;
+  const aStart = displayResults.transactions.length;
+  const cStart = aStart + displayResults.accounts.length;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -298,17 +308,17 @@ export function CommandPalette({
             </p>
           ) : (
             <div className="space-y-3">
-              {renderGroup(LABELS.transaction(), results.transactions, tStart)}
-              {renderGroup(LABELS.account(), results.accounts, aStart)}
-              {renderGroup(LABELS.category(), results.categories, cStart)}
+              {renderGroup(LABELS.transaction(), displayResults.transactions, tStart)}
+              {renderGroup(LABELS.account(), displayResults.accounts, aStart)}
+              {renderGroup(LABELS.category(), displayResults.categories, cStart)}
             </div>
           )}
         </div>
 
         <div className="flex items-center justify-between border-t-2 border-border bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground">
           <span>
-            {results.total > 0
-              ? m.search_total_results({ count: results.total })
+            {displayResults.total > 0
+              ? m.search_total_results({ count: displayResults.total })
               : m.search_typing_hint()}
           </span>
           <span className="flex items-center gap-1">

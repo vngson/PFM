@@ -205,9 +205,13 @@ export function TransactionList({
             {group.rows.map((row) => {
               const meta = TYPE_META[row.type];
               const CatIcon = row.category ? getIcon(row.category.icon_name) : null;
+              // Chỉ income/expense mới có +/- amount trực tiếp. Transfer là row
+              // đặc biệt (legacy): hiển thị ⇄ (neutral). Transfer mới không có
+              // type='transfer' nữa — chỉ là 2 row income+expense bình thường.
               const sign = row.type === 'income' ? '+' : row.type === 'expense' ? '−' : '⇄';
               const fallbackColor =
                 row.type === 'income' ? '#7fb069' : row.type === 'expense' ? '#ff4d4d' : '#64748b';
+              const displayLabel = row.category?.name ?? TYPE_META[row.type].label();
               return (
                 <div
                   key={row.id}
@@ -233,7 +237,7 @@ export function TransactionList({
                   {/* Row 1 — Name + Badge (col 2) + Amount + ⋮ (col 3, cùng dòng) */}
                   <div className="col-start-2 flex min-w-0 items-center gap-x-2 gap-y-0.5 pr-1">
                     <span className="truncate font-heading text-sm font-bold uppercase tracking-wide">
-                      {row.category?.name ?? TYPE_META[row.type].label()}
+                      {displayLabel}
                     </span>
                     <Badge variant={meta.badge} className="shrink-0">{meta.label()}</Badge>
                   </div>
@@ -278,10 +282,13 @@ export function TransactionList({
                   {/* Row 2 — Source (account). col-start-2 (cùng cột với text dòng 1)
                        + pl-7 = width icon box (size-6 24px + border-2 mỗi bên = 28px)
                        → text "Momo - Quỹ" bắt đầu ở mép phải icon (thẳng hàng icon).
-                       min-h giữ chiều cao ổn định dù account name ngắn hay dài. */}
-                  <span className="col-span-2 col-start-2 row-start-2 inline-flex min-h-4 items-center truncate pl-0 text-xs text-muted-foreground">
-                    {row.account.name}
-                  </span>
+                       min-h giữ chiều cao ổn định dù account name ngắn hay dài.
+                       Transfer thì label đã có sẵn cả from → to → skip dòng này. */}
+                  {row.type !== 'transfer' ? (
+                    <span className="col-span-2 col-start-2 row-start-2 inline-flex min-h-4 items-center truncate pl-0 text-xs text-muted-foreground">
+                      {row.account.name}
+                    </span>
+                  ) : null}
 
                   {/* Row 3 — Description. Cùng left-edge với row 2
                        (thẳng hàng icon), row 3 đúng vị trí. min-h giữ
@@ -303,6 +310,8 @@ export function TransactionList({
                   const CatIcon = row.category ? getIcon(row.category.icon_name) : null;
                   const AccIcon = getIcon(row.account.icon_name ?? '');
                   const sign = row.type === 'income' ? '+' : row.type === 'expense' ? '−' : '⇄';
+                  const isTransfer = row.type === 'transfer';
+                  const displayLabel = row.category?.name ?? TYPE_META[row.type].label();
                   return (
                     <TableRow key={row.id}>
                       <TableCell>
@@ -318,7 +327,7 @@ export function TransactionList({
                           >
                             {CatIcon ? (
                               <CatIcon className="size-5" />
-                            ) : row.type === 'transfer' ? (
+                            ) : isTransfer ? (
                               <ArrowLeftRight className="size-5" />
                             ) : row.type === 'income' ? (
                               <ArrowDownLeft className="size-5" />
@@ -329,7 +338,7 @@ export function TransactionList({
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                               <span className="font-heading text-sm font-bold uppercase tracking-wide">
-                                {row.category?.name ?? TYPE_META[row.type].label()}
+                                {displayLabel}
                               </span>
                               <Badge variant={meta.badge}>{meta.label()}</Badge>
                               {row.note ? (
@@ -341,15 +350,17 @@ export function TransactionList({
                                 </>
                               ) : null}
                             </div>
-                            <p className="mt-0.5 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                              <span
-                                className="inline-flex size-3 shrink-0 items-center justify-center border border-border"
-                                style={{ backgroundColor: row.account.color ?? '#64748b' }}
-                              >
-                                <AccIcon className="size-2 text-white" />
-                              </span>
-                              {row.account.name}
-                            </p>
+                            {isTransfer ? null : (
+                              <p className="mt-0.5 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <span
+                                  className="inline-flex size-3 shrink-0 items-center justify-center border border-border"
+                                  style={{ backgroundColor: row.account.color ?? '#64748b' }}
+                                >
+                                  <AccIcon className="size-2 text-white" />
+                                </span>
+                                {row.account.name}
+                              </p>
+                            )}
                           </div>
                         </div>
                       </TableCell>

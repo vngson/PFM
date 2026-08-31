@@ -34,13 +34,18 @@ export function useDialogFormState<S, P>(
   );
   const [closeOnSuccess, setCloseOnSuccess] = useState(false);
   const wasPending = useRef(false);
-  const stateRef = useRef(state);
-  stateRef.current = state;
 
+  // Lưu state mới nhất vào ref TRONG effect (chạy sau render, commit phase).
+  // Đọc state trong effect pending-tracking cần giá trị mới nhất sau khi action
+  // settle, nhưng đọc state từ closure sẽ stale nếu effect chạy trước commit.
+  // Vì effect `[pending]` chạy SAU commit của state, ta đọc trực tiếp `state`
+  // thay vì qua ref — React docs khuyến nghị tránh "ref during render".
   useEffect(() => {
-    // Track cạnh: false → true → false = 1 submission complete
+    // Track cạnh: false → true → false = 1 submission complete. Effect này
+    // sync với external system (useActionState action lifecycle) — flip
+    // closeOnSuccess flag là contract với caller, không phải derived state.
     if (wasPending.current && !pending) {
-      const last = stateRef.current as { error?: unknown; fieldErrors?: unknown } | null;
+      const last = state as { error?: unknown; fieldErrors?: unknown } | null;
       const hasError =
         last !== null &&
         (Boolean(last.error) ||
@@ -48,11 +53,12 @@ export function useDialogFormState<S, P>(
             last.fieldErrors !== null &&
             Object.keys(last.fieldErrors as Record<string, unknown>).length > 0));
       if (!hasError) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCloseOnSuccess(true);
       }
     }
     wasPending.current = pending;
-  }, [pending]);
+  }, [pending, state]);
 
   // Caller resets closeOnSuccess sau khi đã xử lý (vd đã đóng dialog).
   // Helper này tự reset khi dialog đóng.

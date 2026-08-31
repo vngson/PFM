@@ -8,7 +8,7 @@
 //
 // Chỉ hiện khi user chưa có account + category (DB-derived).
 // Full i18n — toàn bộ UI text qua Paraglide messages.
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { PartyPopper, Wallet, Tag, ArrowRight, X } from 'lucide-react';
@@ -44,24 +44,24 @@ type Step = 1 | 2 | 3 | 'done';
 
 export function OnboardingWizard({ accounts, categories }: OnboardingWizardProps) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [step, setStep] = useState<Step>(1);
+  // dismissed lưu trong React state (sync từ localStorage qua lazy init).
+  // Lazy init chỉ chạy 1 lần trên client; server render trả false để tránh
+  // hydration mismatch (server không có localStorage).
+  const [dismissed, setDismissed] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem(STORAGE_KEY) === '1';
+  });
 
   // Hiển thị wizard khi user chưa có account/category và chưa từng đóng.
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const dismissed = window.localStorage.getItem(STORAGE_KEY);
-    if (dismissed === '1') return;
-    if (accounts.length === 0 && categories.length === 0) {
-      setOpen(true);
-    }
-  }, [accounts.length, categories.length]);
+  // Derive mỗi render thay vì effect để tránh setState-in-effect.
+  const open = !dismissed && accounts.length === 0 && categories.length === 0;
+  const [step, setStep] = useState<Step>(1);
 
   function dismiss() {
-    setOpen(false);
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(STORAGE_KEY, '1');
     }
+    setDismissed(true);
   }
 
   function next() {

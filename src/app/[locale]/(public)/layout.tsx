@@ -1,6 +1,6 @@
 // Layout cho các trang public (privacy, terms) — header với BrandLogo +
 // nút Trang chủ + LanguageSwitcher + ThemeToggle, footer với legal links.
-// Khác với (protected) layout: không cần auth, không có NavLinks/QuickAddForm.
+// Khác với (protected) layout: không cần auth, không có NavLinks/QuickAddDialog.
 // Proxy.ts đã allowlist /privacy + /terms nên user đã soft-delete vẫn truy cập được.
 import Link from 'next/link';
 import { BrandLogo } from '@/components/branding/brand-logo';

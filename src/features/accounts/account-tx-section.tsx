@@ -33,6 +33,7 @@ type Row = {
   amount: number;
   note: string | null;
   category: { id: string; name: string; icon_name: string; color: string; type: 'income' | 'expense' } | null;
+  account: { id: string; name: string };
 };
 
 interface AccountTxSectionProps {
@@ -98,6 +99,12 @@ export function AccountTxSection({
                     : t.type === 'expense'
                       ? '#ff4d4d'
                       : '#64748b';
+                // Label: transfer (legacy) → "Chuyển tiền"; income/expense → category name.
+                // Transfer mới không tạo type='transfer' nữa — chỉ là 2 row
+                // income+expense bình thường.
+                const rowLabel =
+                  t.category?.name ??
+                  (t.type === 'transfer' ? m.transactions_type_transfer() : m.recurring_type_income());
                 return (
                   <TableRow key={t.id}>
                     <TableCell className="w-12">
@@ -118,8 +125,7 @@ export function AccountTxSection({
                     </TableCell>
                     <TableCell>
                       <div className="font-heading text-sm font-bold uppercase tracking-wide">
-                        {t.category?.name ??
-                          (t.type === 'transfer' ? m.transactions_type_transfer() : m.recurring_type_income())}
+                        {rowLabel}
                       </div>
                       {t.note ? (
                         <div className="mt-0.5 truncate text-xs text-muted-foreground">{t.note}</div>
@@ -151,6 +157,7 @@ export function AccountTxSection({
       {hasMore && nextBefore ? (
         <div className="flex justify-center pt-2">
           <Button
+            nativeButton={false}
             render={
               <Link
                 href={`?before=${nextBefore}`}

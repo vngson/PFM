@@ -28,6 +28,7 @@ type Row = {
   amount: number;
   note: string | null;
   category: { id: string; name: string; icon_name: string; color: string; type: 'income' | 'expense' } | null;
+  account: { id: string; name: string };
 };
 
 interface AccountDetailViewProps {

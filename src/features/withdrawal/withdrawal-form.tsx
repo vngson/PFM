@@ -396,7 +396,7 @@ export function WithdrawalForm({
                   id="amount"
                   name="amount"
                   type="number"
-                  step="1000"
+                  step="any"
                   min="0"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
@@ -415,7 +415,7 @@ export function WithdrawalForm({
                   id="fee"
                   name="fee"
                   type="number"
-                  step="100"
+                  step="any"
                   min="0"
                   value={fee}
                   onChange={(e) => setFee(e.target.value)}

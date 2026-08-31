@@ -2,7 +2,14 @@
 
 // SearchBox: input tìm theo note giao dịch.
 // Debounced 350ms rồi push ?q= vào URL — URL là source-of-truth nên shareable + back/forward hoạt động.
-import { useEffect, useRef, useState, useTransition } from 'react';
+//
+// Sync URL → local value: dùng state "lastUrlQ" ghi nhớ giá trị URL mà
+// component đã từng thấy. Khi render mà URL q khác với lastUrlQ nhưng lại
+// trùng với local value, tức là URL vừa được push từ chính component này
+// → không cần reset. Khi URL q khác cả lastUrlQ lẫn local value, tức là URL
+// đổi từ bên ngoài (back/forward, clear chip) → reset local value.
+// State (không phải ref) để React rule "no refs during render" cho phép read.
+import { useRef, useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, X } from 'lucide-react';
 
@@ -17,14 +24,21 @@ interface SearchBoxProps {
 export function SearchBox({ defaultValue, placeholder }: SearchBoxProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const urlQ = searchParams.get('q') ?? '';
   const [value, setValue] = useState(defaultValue);
+  // lastUrlQ state để tránh reset value khi URL vừa được push từ chính component.
+  const [lastUrlQ, setLastUrlQ] = useState(urlQ);
+  if (urlQ !== lastUrlQ) {
+    // URL q thay đổi từ bên ngoài (back/forward, clear chip) → sync local value
+    // về URL. Nếu URL q khác lastUrlQ nhưng trùng value, tức là URL vừa được
+    // push từ chính component này (handleChange) → chỉ cần cập nhật lastUrlQ.
+    setLastUrlQ(urlQ);
+    if (urlQ !== value) {
+      setValue(urlQ);
+    }
+  }
   const [, startTransition] = useTransition();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Sync khi URL thay đổi từ bên ngoài (back/forward, clear chip, ...)
-  useEffect(() => {
-    setValue(searchParams.get('q') ?? '');
-  }, [searchParams]);
 
   const pushQ = (next: string) => {
     const params = new URLSearchParams(searchParams.toString());

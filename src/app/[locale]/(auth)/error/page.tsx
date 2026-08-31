@@ -31,10 +31,10 @@ export default async function ErrorPage({ searchParams }: ErrorPageProps) {
       </CardHeader>
       <CardContent />
       <CardFooter className="justify-center gap-2">
-        <Button variant="outline" render={<Link href={buildLocalizedHref("/login", getLocale())} />}>
+        <Button variant="outline" nativeButton={false} render={<Link href={buildLocalizedHref("/login", getLocale())} />}>
           {m.auth_error_back_login()}
         </Button>
-        <Button render={<Link href={buildLocalizedHref("/signup", getLocale())} />}>{m.auth_error_signup_again()}</Button>
+        <Button nativeButton={false} render={<Link href={buildLocalizedHref("/signup", getLocale())} />}>{m.auth_error_signup_again()}</Button>
       </CardFooter>
     </Card>
   );

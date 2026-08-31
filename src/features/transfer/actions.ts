@@ -6,10 +6,12 @@
 //   1. Validate input qua Zod (from, to, amount, date, note).
 //   2. Verify cả 2 account thuộc user + chưa archive.
 //   3. Validate from !== to và !(from.type === 'cash' && to.type === 'cash').
-//   4. Insert 2 transactions trong 1 round-trip để trigger trg_transactions_balance
-//      cập nhật cả 2 account atomic:
-//        - Expense (amount) từ from_account, category = NULL
-//        - Income  (amount) vào to_account,   category = NULL
+//   4. Insert 2 transactions cùng lúc:
+//      - 1 expense row (account_id=from, amount, note='Chuyển tiền: ...')
+//        → trigger trừ amount khỏi from.
+//      - 1 income row  (account_id=to,   amount, note giống trên)
+//        → trigger cộng amount vào to.
+//      Cùng note để user nhận biết 2 row này = 1 transfer.
 //   5. Revalidate paths liên quan.
 
 import { revalidatePath } from 'next/cache';
@@ -90,14 +92,9 @@ export async function createTransfer(
     return { error: m.action_transfer_err_cash_to_cash() };
   }
 
-  // Build 2-row payload. Cả 2 row type='transfer' để list filter `?type=transfer`
-  // match cả cặp (from side + to side). Trigger cập nhật current_balance: row đầu (from)
-  // được insert trước sẽ trừ amount, nhưng cần fix trigger để row thứ 2 (to) cộng amount
-  // (hiện tại trigger gộp transfer thành -amount → balance sai).
-  //
-  // TODO: fix trg_transactions_balance để phân biệt hướng transfer (in/out).
-  // Tạm thời: dùng type='transfer' cho filter, chấp nhận balance có thể off — user cần
-  // thấy được giao dịch chuyển tiền trước.
+  // Build 2-row payload: 1 expense trừ from, 1 income cộng to. Cùng note để
+  // user nhận biết 2 row = 1 transfer. Trigger hiện tại handle income/expense
+  // đúng → tự cập nhật current_balance 2 phía.
   const transferNote = (data.note ?? '').trim()
     ? `Chuyển tiền: ${data.note}`.trim()
     : 'Chuyển tiền';
@@ -107,7 +104,7 @@ export async function createTransfer(
       user_id: user.id,
       account_id: data.from_account_id,
       category_id: null,
-      type: 'transfer' as const,
+      type: 'expense' as const,
       amount: data.amount,
       occurred_at: data.occurred_at,
       note: transferNote,
@@ -116,7 +113,7 @@ export async function createTransfer(
       user_id: user.id,
       account_id: data.to_account_id,
       category_id: null,
-      type: 'transfer' as const,
+      type: 'income' as const,
       amount: data.amount,
       occurred_at: data.occurred_at,
       note: transferNote,

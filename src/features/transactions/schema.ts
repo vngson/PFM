@@ -1,5 +1,9 @@
 // Zod schemas cho transactions — dùng chung giữa Server Action và client form.
 // Factory pattern nhận `t` (translator) để error messages theo locale.
+//
+// Lưu ý: form không cho phép tạo type='transfer' nữa — transfer dùng
+// TransferForm riêng (tạo 2 row income+expense). Type 'transfer' chỉ còn
+// trong enum để backward-compat với data cũ trong DB.
 import { z } from 'zod';
 
 export type TransactionMessages = {

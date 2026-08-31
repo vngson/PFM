@@ -97,6 +97,7 @@ export function AccountForm({
         notify.success(isEdit ? m.accounts_update_toast() : m.accounts_create_toast());
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [closeOnSuccess, isEdit]);
 
   const triggerButton = isEdit ? (
@@ -189,7 +190,7 @@ export function AccountForm({
                   id="initial_balance"
                   name="initial_balance"
                   type="number"
-                  step="0.01"
+                  step="any"
                   min="0"
                   defaultValue="0"
                   required

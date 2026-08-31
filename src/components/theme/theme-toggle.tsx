@@ -4,7 +4,7 @@
 // Dùng useTheme từ next-themes để đọc/ghi theme + persist localStorage.
 // Icon: Sun cho light, Moon cho dark, Monitor cho system.
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { Moon, Sun, Monitor } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
@@ -20,12 +20,20 @@ function labelFor(t: Theme): string {
       : m.theme_label_system();
 }
 
+// Subscribe noop để đánh dấu "đã mount trên client". Server snapshot = false
+// (chưa mount), client snapshot = true (đã mount). Dùng useSyncExternalStore
+// thay vì useEffect + setState tránh được cascading render và đúng chuẩn
+// concurrent React cho SSR/CSR boundary.
+function subscribe() {
+  return () => {};
+}
+
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  // Tránh hydration mismatch khi render trên server
-  useEffect(() => setMounted(true), []);
+  // Tránh hydration mismatch khi render trên server: server snapshot = false,
+  // client snapshot = true → lần render đầu trên client trùng server (false),
+  // sau đó React swap sang true cho re-render tiếp theo.
+  const mounted = useSyncExternalStore(subscribe, () => true, () => false);
 
   if (!mounted) {
     return (

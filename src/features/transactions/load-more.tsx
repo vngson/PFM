@@ -19,6 +19,7 @@ export function LoadMore({ before, month }: LoadMoreProps) {
   return (
     <div className="flex justify-center pt-4">
       <Button
+        nativeButton={false}
         render={
           <Link
             href={buildLocalizedHref(`/transactions?month=${month}&before=${before}`, getLocale())}

@@ -1,7 +1,7 @@
 // Layout cho mọi trang cần đăng nhập. Kiểm tra session bằng getUser()
 // (an toàn hơn getSession vì verify JWT với Supabase).
 // Nếu chưa login → redirect về /login.
-// Fetch accounts + categories song song để cấp cho QuickAddForm (FAB).
+// Fetch accounts + categories song song để cấp cho QuickAddDialog (FAB).
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
@@ -11,7 +11,7 @@ import { BrandLogo } from '@/components/branding/brand-logo';
 import { UserAvatar } from '@/components/branding/user-avatar';
 import { PageTransition } from '@/components/branding/page-transition';
 import { SearchTrigger } from '@/features/search/search-trigger';
-import { QuickAddForm } from '@/features/transactions/quick-add-form';
+import { QuickAddDialog } from '@/features/transactions/quick-add-dialog';
 import { ScrollToTop } from '@/components/scroll-to-top';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { LanguageSwitcher } from '@/components/i18n/language-switcher';
@@ -35,7 +35,7 @@ export default async function ProtectedLayout({
     redirect(`/${locale}/login`);
   }
 
-  // Parallel fetch cho QuickAddForm FAB.
+  // Parallel fetch cho QuickAddDialog FAB.
   const [{ data: accounts }, { data: categories }] = await Promise.all([
     supabase
       .from('accounts')
@@ -84,7 +84,7 @@ export default async function ProtectedLayout({
       <main id="main-content" className="min-h-[60vh] flex-1 pb-20 md:pb-0">
         <PageTransition>{children}</PageTransition>
       </main>
-      <QuickAddForm
+      <QuickAddDialog
         accounts={accounts ?? []}
         categories={categories ?? []}
       />

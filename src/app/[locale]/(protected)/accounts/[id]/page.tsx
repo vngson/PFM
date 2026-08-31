@@ -31,6 +31,8 @@ export default async function AccountDetailPage({
 
   const txnResult = await listTransactions({
     account_id: account.id,
+    // Transfer mới = 2 row income+expense — account_id filter bình thường đã
+    // match cả 2 row mà account tham gia (from là expense, to là income).
     before,
     limit: PAGE_SIZE,
   });

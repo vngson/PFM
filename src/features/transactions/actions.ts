@@ -215,7 +215,9 @@ export async function listTransactions(
       q = q.gte('occurred_at', start).lte('occurred_at', end);
     }
   }
-  if (filters.account_id) q = q.eq('account_id', filters.account_id);
+  if (filters.account_id) {
+    q = q.eq('account_id', filters.account_id);
+  }
   if (filters.category_id) q = q.eq('category_id', filters.category_id);
   if (filters.type) q = q.eq('type', filters.type);
   if (filters.before) q = q.lt('occurred_at', filters.before);

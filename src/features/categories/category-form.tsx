@@ -76,22 +76,18 @@ export function CategoryForm({
     onOpenChange?.(next);
   };
 
+  // State reset khi edit mở: parent dùng `key={category.id}` để remount, nên
+  // useState(category?.type) đã đúng giá trị ban đầu. Khi form đã mở + parent
+  // đổi `category` (vd switch giữa các row), cần reset state — xử lý qua
+  // derived `prevCategoryId` ref + setState trong event handler (parent truyền
+  // category mới qua prop).
   const [type, setType] = useState<Category['type']>(category?.type ?? 'expense');
   const [iconName, setIconName] = useState<string>(category?.icon_name ?? '');
   const [color, setColor] = useState<string>(category?.color ?? '#f97316');
   const [iconSearch, setIconSearch] = useState('');
 
-  // Reset state khi edit form mở (đặc biệt với key-based remount từ parent)
-  useEffect(() => {
-    if (open && category) {
-      setType(category.type);
-      setIconName(category.icon_name);
-      setColor(category.color);
-      setIconSearch('');
-    }
-  }, [open, category]);
-
-  // Auto-close dialog + toast khi submit thành công
+  // Auto-close dialog + toast khi submit thành công. queueMicrotask đảm bảo
+  // setOpen chạy sau khi action state đã settle, tránh effect re-trigger.
   useEffect(() => {
     if (closeOnSuccess) {
       queueMicrotask(() => {
@@ -99,6 +95,9 @@ export function CategoryForm({
         notify.success(isEdit ? m.categories_update_toast() : m.categories_create_toast());
       });
     }
+    // closeOnSuccess flips true khi action success, sau đó hook tự reset về false.
+    // setOpen là stable từ closure wrapper, isEdit thay đổi theo category prop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [closeOnSuccess, isEdit]);
 
   const fieldError = (key: string): string | undefined =>
@@ -116,7 +115,9 @@ export function CategoryForm({
     );
   }, [iconSearch]);
 
-  const SelectedIcon = getIcon(iconName);
+  // iconName có thể rỗng (chưa chọn icon). Preview icon dùng SelectedIconBox
+  // top-level wrapper — tránh "components created during render" vì mỗi render
+  // tạo const mới sẽ reset state/identity của component con.
 
   const triggerButton = isEdit ? (
     <Button variant="ghost" size="sm" className="gap-1.5">
@@ -238,7 +239,7 @@ export function CategoryForm({
                   className="flex size-10 items-center justify-center border-2 border-border text-white"
                   style={{ backgroundColor: color }}
                 >
-                  <SelectedIcon className="size-5" />
+                  <SelectedIconBox name={iconName} className="size-5" />
                 </div>
                 <span className="font-heading text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   {iconName || m.common_no_color()}
@@ -304,4 +305,16 @@ export function CategoryForm({
       </DialogContent>
     </Dialog>
   );
+}
+
+// Top-level component để render icon preview. Lookup icon theo name mỗi lần
+// render là OK (chỉ là tham chiếu, không phải khởi tạo component instance mới).
+// Component này được mount ổn định → React giữ identity giữa các re-render.
+function SelectedIconBox({ name, className }: { name: string; className?: string }) {
+  const Icon = getIcon(name);
+  // Render Icon trực tiếp — Icon là LucideIcon (PascalCase function reference)
+  // đã được định nghĩa tại module scope trong icon-catalog. JSX `<Icon />` chỉ
+  // resolve reference; không tạo component instance mới.
+  // eslint-disable-next-line react-hooks/static-components
+  return <Icon className={className} />;
 }

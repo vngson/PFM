@@ -1,5 +1,8 @@
-// Zod schema cho transfer form — 1 lần chuyển tạo 2 transactions
-// (expense từ source + income vào destination). Cùng pattern với withdrawal.
+// Zod schema cho transfer form — 1 lần chuyển tạo 2 transactions:
+//   1 expense row (account_id=from, amount) — trừ tiền tài khoản gốc
+//   1 income row  (account_id=to,   amount) — cộng tiền tài khoản đích
+// Cùng note để user nhận biết là 1 transfer. Trigger hiện tại đã handle
+// income/expense đúng nên không cần nhánh đặc biệt cho transfer.
 //
 // Khác withdrawal:
 //   - Không có fee (chuyển đúng amount)
