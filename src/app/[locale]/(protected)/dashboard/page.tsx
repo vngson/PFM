@@ -1,16 +1,22 @@
 // Dashboard: stat cards + 3 chart (income/expense trend, category pie, account balances) + quick actions.
 // Charts wrap trong Suspense để streaming từng phần, với skeleton fallback.
 // Full i18n qua Paraglide messages + locale-aware format.
+//
+// MonthPicker là client wrapper quản lý useTransition: khi user bấm prev/next
+// tháng, MonthPicker toggle giữa `children` (DashboardMonthView) và `loading`
+// (skeleton) dựa trên pending → skeleton hiện NGAY khi bấm, không phụ thuộc
+// Next.js soft-navigation cache. Header + quick actions không phụ thuộc month.
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { Wallet, Tag, ArrowRight, Receipt, Target, TrendingUp, TrendingDown } from 'lucide-react';
 
 import { createClient } from '@/lib/supabase/server';
-import { SkeletonCard } from '@/components/ui/skeleton-presets';
+import { SkeletonCard, SkeletonStat } from '@/components/ui/skeleton-presets';
 import { DashboardCharts } from '@/features/dashboard/dashboard-charts';
+import { MonthPicker } from '@/features/transactions/month-picker';
 import { OnboardingWizard } from '@/features/onboarding/wizard';
 import { convertToVND } from '@/lib/fx';
-import { formatCurrency } from '@/lib/format';
+import { formatCurrency, formatMonthLabel } from '@/lib/format';
 import { buildLocalizedHref, getLocale } from '@/lib/i18n/locale-path';
 import * as m from '@/paraglide/messages';
 
@@ -19,8 +25,13 @@ function currentMonth(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ month?: string }>;
+}) {
   const supabase = await createClient();
+  const sp = await searchParams;
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -32,15 +43,13 @@ export default async function DashboardPage() {
     return null;
   }
 
-  // Tính range tháng hiện tại cho summary transaction
-  const month = currentMonth();
-  const [y, monthNum] = month.split('-').map(Number);
-  const start = `${y}-${String(monthNum).padStart(2, '0')}-01`;
-  const lastDay = new Date(y, monthNum, 0).getDate();
-  const end = `${y}-${String(monthNum).padStart(2, '0')}-${lastDay}`;
+  // Tính range tháng cho summary transaction — URL ?month=YYYY-MM override,
+  // fallback về tháng hiện tại nếu không có.
+  const month = sp.month && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : currentMonth();
 
-  // Fetch stat cards data (luôn sync để header + stat cards hiển thị ngay).
-  const [{ data: profile }, { data: accounts }, { data: categories }, { data: txns }] =
+  // Fetch dữ liệu KHÔNG phụ thuộc month (header + onboarding + accounts list) ở
+  // parent để render ngay frame đầu.
+  const [{ data: profile }, { data: fullAccounts }, { data: fullCategories }] =
     await Promise.all([
       supabase
         .from('profiles')
@@ -49,73 +58,17 @@ export default async function DashboardPage() {
         .single(),
       supabase
         .from('accounts')
-        .select('id, current_balance, currency_code, is_archived')
+        .select('id, name, currency_code, color, icon_name')
         .eq('user_id', user!.id)
-        .eq('is_archived', false),
-      supabase.from('categories').select('id, type').eq('user_id', user!.id),
+        .eq('is_archived', false)
+        .order('name', { ascending: true }),
       supabase
-        .from('transactions')
-        .select('type, amount, account:accounts(currency_code)')
+        .from('categories')
+        .select('id, name, type, icon_name, color')
         .eq('user_id', user!.id)
-        .gte('occurred_at', start)
-        .lte('occurred_at', end),
+        .order('type', { ascending: true })
+        .order('name', { ascending: true }),
     ]);
-
-  // Fetch full account + category cho OnboardingWizard.
-  // Cần full detail (name + color + icon) để wizard có thể verify sau khi user tạo.
-  const [{ data: fullAccounts }, { data: fullCategories }] = await Promise.all([
-    supabase
-      .from('accounts')
-      .select('id, name, currency_code, color, icon_name')
-      .eq('user_id', user!.id)
-      .eq('is_archived', false)
-      .order('name', { ascending: true }),
-    supabase
-      .from('categories')
-      .select('id, name, type, icon_name, color')
-      .eq('user_id', user!.id)
-      .order('type', { ascending: true })
-      .order('name', { ascending: true }),
-  ]);
-
-  // Tính tổng số dư theo currency
-  const totalByCurrency = (accounts ?? []).reduce<Record<string, number>>(
-    (acc, a) => {
-      acc[a.currency_code] = (acc[a.currency_code] ?? 0) + a.current_balance;
-      return acc;
-    },
-    {},
-  );
-
-  // Tổng số dư quy đổi về VND (unified balance)
-  const totalVnd = Object.entries(totalByCurrency).reduce((sum, [code, val]) => {
-    const v = convertToVND(val, code);
-    return sum + (v ?? 0);
-  }, 0);
-
-  // Tính thu/chi ròng tháng này theo currency
-  const monthByCurrency = (txns ?? []).reduce<
-    Record<string, { income: number; expense: number; net: number; count: number }>
-  >((acc, t) => {
-    const code = (t as never as { account: { currency_code: string } | null }).account?.currency_code ?? 'VND';
-    if (!acc[code]) acc[code] = { income: 0, expense: 0, net: 0, count: 0 };
-    acc[code]!.count += 1;
-    const amount = Number(t.amount);
-    if (t.type === 'income') acc[code]!.income += amount;
-    else if (t.type === 'expense') acc[code]!.expense += amount;
-    acc[code]!.net = acc[code]!.income - acc[code]!.expense;
-    return acc;
-  }, {});
-
-  // Thu/chi ròng tháng này quy đổi về VND
-  const monthNetVnd = Object.entries(monthByCurrency).reduce((sum, [code, s]) => {
-    const v = convertToVND(s.net, code);
-    return sum + (v ?? 0);
-  }, 0);
-
-  const expenseCount = (categories ?? []).filter((c) => c.type === 'expense').length;
-  const incomeCount = (categories ?? []).filter((c) => c.type === 'income').length;
-  const txnCount = txns?.length ?? 0;
 
   return (
     <div className="space-y-8 px-4 py-6 md:px-6 md:py-8 lg:mx-auto lg:max-w-6xl">
@@ -145,6 +98,146 @@ export default async function DashboardPage() {
         </p>
       </div>
 
+      {/* MonthPicker: client wrapper toggle giữa loading skeleton và RSC content
+          dựa trên useTransition.pending — skeleton hiện NGAY khi bấm prev/next. */}
+      <MonthPicker
+        month={month}
+        loading={
+          <div className="space-y-8" aria-busy="true">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <SkeletonStat />
+              <SkeletonStat />
+              <SkeletonStat />
+            </div>
+            <div className="grid gap-5 lg:grid-cols-2">
+              <SkeletonCard rows={5} />
+              <SkeletonCard rows={5} />
+              <SkeletonCard rows={5} />
+              <SkeletonCard rows={5} />
+            </div>
+          </div>
+        }
+      >
+        <DashboardMonthView month={month} />
+      </MonthPicker>
+
+      {/* Quick actions */}
+      <div className="border-2 border-border bg-card p-6 shadow-brutal">
+        <h2 className="font-heading text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          {m.dashboard_quick_section()}
+        </h2>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Link
+            href={buildLocalizedHref("/accounts", getLocale())}
+            className="inline-flex h-12 items-center justify-between border-2 border-border bg-background px-4 font-heading text-xs font-bold uppercase tracking-wider transition-all shadow-brutal-sm hover:bg-secondary hover:shadow-brutal hover:-translate-x-[2px] hover:-translate-y-[2px]"
+          >
+            {m.dashboard_quick_accounts()} <ArrowRight className="size-4" />
+          </Link>
+          <Link
+            href={buildLocalizedHref("/categories", getLocale())}
+            className="inline-flex h-12 items-center justify-between border-2 border-border bg-background px-4 font-heading text-xs font-bold uppercase tracking-wider transition-all shadow-brutal-sm hover:bg-secondary hover:shadow-brutal hover:-translate-x-[2px] hover:-translate-y-[2px]"
+          >
+            {m.dashboard_quick_categories()} <ArrowRight className="size-4" />
+          </Link>
+          <Link
+            href={buildLocalizedHref("/transactions", getLocale())}
+            className="inline-flex h-12 items-center justify-between border-2 border-border bg-background px-4 font-heading text-xs font-bold uppercase tracking-wider transition-all shadow-brutal-sm hover:bg-secondary hover:shadow-brutal hover:-translate-x-[2px] hover:-translate-y-[2px]"
+          >
+            <span className="flex items-center gap-2">
+              <Receipt className="size-4" /> {m.dashboard_quick_transactions()}
+            </span>
+            <ArrowRight className="size-4" />
+          </Link>
+          <Link
+            href={buildLocalizedHref("/budgets", getLocale())}
+            className="inline-flex h-12 items-center justify-between border-2 border-border bg-background px-4 font-heading text-xs font-bold uppercase tracking-wider transition-all shadow-brutal-sm hover:bg-secondary hover:shadow-brutal hover:-translate-x-[2px] hover:-translate-y-[2px]"
+          >
+            <span className="flex items-center gap-2">
+              <Target className="size-4" /> {m.dashboard_quick_budgets()}
+            </span>
+            <ArrowRight className="size-4" />
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface DashboardMonthViewProps {
+  month: string;
+}
+
+/** Phần nội dung phụ thuộc tháng — fetch stat cards + month range + categories count,
+ * render UI. Tách riêng để khi URL ?month=YYYY-MM đổi, React Suspense ở parent
+ * show skeleton thay vì hiển thị data tháng cũ trong khi RSC mới đang fetch. */
+async function DashboardMonthView({ month }: DashboardMonthViewProps) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const [y, monthNum] = month.split('-').map(Number);
+  const start = `${y}-${String(monthNum).padStart(2, '0')}-01`;
+  const lastDay = new Date(y, monthNum, 0).getDate();
+  const end = `${y}-${String(monthNum).padStart(2, '0')}-${lastDay}`;
+
+  const [{ data: accounts }, { data: categories }, { data: txns }] = await Promise.all([
+    supabase
+      .from('accounts')
+      .select('id, current_balance, currency_code, is_archived')
+      .eq('user_id', user.id)
+      .eq('is_archived', false),
+    supabase.from('categories').select('id, type').eq('user_id', user.id),
+    supabase
+      .from('transactions')
+      .select('type, amount, account:accounts(currency_code)')
+      .eq('user_id', user.id)
+      .gte('occurred_at', start)
+      .lte('occurred_at', end),
+  ]);
+
+  // Tính tổng số dư theo currency
+  const totalByCurrency = (accounts ?? []).reduce<Record<string, number>>(
+    (acc, a) => {
+      acc[a.currency_code] = (acc[a.currency_code] ?? 0) + a.current_balance;
+      return acc;
+    },
+    {},
+  );
+
+  // Tổng số dư quy đổi về VND (unified balance)
+  const totalVnd = Object.entries(totalByCurrency).reduce((sum, [code, val]) => {
+    const v = convertToVND(val, code);
+    return sum + (v ?? 0);
+  }, 0);
+
+  // Tính thu/chi ròng tháng đang xem theo currency
+  const monthByCurrency = (txns ?? []).reduce<
+    Record<string, { income: number; expense: number; net: number; count: number }>
+  >((acc, t) => {
+    const code = (t as never as { account: { currency_code: string } | null }).account?.currency_code ?? 'VND';
+    if (!acc[code]) acc[code] = { income: 0, expense: 0, net: 0, count: 0 };
+    acc[code]!.count += 1;
+    const amount = Number(t.amount);
+    if (t.type === 'income') acc[code]!.income += amount;
+    else if (t.type === 'expense') acc[code]!.expense += amount;
+    acc[code]!.net = acc[code]!.income - acc[code]!.expense;
+    return acc;
+  }, {});
+
+  // Thu/chi ròng tháng đang xem quy đổi về VND
+  const monthNetVnd = Object.entries(monthByCurrency).reduce((sum, [code, s]) => {
+    const v = convertToVND(s.net, code);
+    return sum + (v ?? 0);
+  }, 0);
+
+  const expenseCount = (categories ?? []).filter((c) => c.type === 'expense').length;
+  const incomeCount = (categories ?? []).filter((c) => c.type === 'income').length;
+  const txnCount = txns?.length ?? 0;
+
+  return (
+    <>
       {/* Stat cards */}
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {/* Tổng số dư */}
@@ -216,11 +309,11 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* Thu chi tháng này */}
+        {/* Thu chi theo tháng đang xem */}
         <div className="border-2 border-border bg-card p-6 text-card-foreground shadow-brutal">
           <div className="flex items-center justify-between border-b-2 border-border pb-3">
             <h2 className="font-heading text-xs font-bold uppercase tracking-wider">
-              {m.dashboard_stat_monthly()}
+              {m.dashboard_stat_monthly({ month: formatMonthLabel(month) })}
             </h2>
             <div className="inline-flex size-9 items-center justify-center border-2 border-border bg-secondary">
               <TrendingUp className="size-4" />
@@ -287,45 +380,6 @@ export default async function DashboardPage() {
       >
         <DashboardCharts month={month} y={y} m={monthNum} />
       </Suspense>
-
-      {/* Quick actions */}
-      <div className="border-2 border-border bg-card p-6 shadow-brutal">
-        <h2 className="font-heading text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          {m.dashboard_quick_section()}
-        </h2>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Link
-            href={buildLocalizedHref("/accounts", getLocale())}
-            className="inline-flex h-12 items-center justify-between border-2 border-border bg-background px-4 font-heading text-xs font-bold uppercase tracking-wider transition-all shadow-brutal-sm hover:bg-secondary hover:shadow-brutal hover:-translate-x-[2px] hover:-translate-y-[2px]"
-          >
-            {m.dashboard_quick_accounts()} <ArrowRight className="size-4" />
-          </Link>
-          <Link
-            href={buildLocalizedHref("/categories", getLocale())}
-            className="inline-flex h-12 items-center justify-between border-2 border-border bg-background px-4 font-heading text-xs font-bold uppercase tracking-wider transition-all shadow-brutal-sm hover:bg-secondary hover:shadow-brutal hover:-translate-x-[2px] hover:-translate-y-[2px]"
-          >
-            {m.dashboard_quick_categories()} <ArrowRight className="size-4" />
-          </Link>
-          <Link
-            href={buildLocalizedHref("/transactions", getLocale())}
-            className="inline-flex h-12 items-center justify-between border-2 border-border bg-background px-4 font-heading text-xs font-bold uppercase tracking-wider transition-all shadow-brutal-sm hover:bg-secondary hover:shadow-brutal hover:-translate-x-[2px] hover:-translate-y-[2px]"
-          >
-            <span className="flex items-center gap-2">
-              <Receipt className="size-4" /> {m.dashboard_quick_transactions()}
-            </span>
-            <ArrowRight className="size-4" />
-          </Link>
-          <Link
-            href={buildLocalizedHref("/budgets", getLocale())}
-            className="inline-flex h-12 items-center justify-between border-2 border-border bg-background px-4 font-heading text-xs font-bold uppercase tracking-wider transition-all shadow-brutal-sm hover:bg-secondary hover:shadow-brutal hover:-translate-x-[2px] hover:-translate-y-[2px]"
-          >
-            <span className="flex items-center gap-2">
-              <Target className="size-4" /> {m.dashboard_quick_budgets()}
-            </span>
-            <ArrowRight className="size-4" />
-          </Link>
-        </div>
-      </div>
-    </div>
+    </>
   );
 }

@@ -4,6 +4,11 @@
 // ?type=transfer sẽ fallback về undefined và hiển thị tab "Tất cả".
 // Neo-brutalism: bordered shadow cards cho summary chips, group theo ngày.
 // Full i18n qua Paraglide messages + locale-aware formatters.
+//
+// MonthPicker là client wrapper quản lý useTransition: khi user bấm prev/next
+// tháng, MonthPicker toggle giữa `children` (RSC content) và `loading` (skeleton)
+// dựa trên pending state → skeleton hiển thị ngay lập tức, không phụ thuộc
+// Next.js soft-navigation cache.
 import Link from 'next/link';
 import { TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 
@@ -20,10 +25,12 @@ import type { Transaction } from '@/types/database';
 import { TransactionForm } from '@/features/transactions/transaction-form';
 import { TransactionList } from '@/features/transactions/transaction-list';
 import { FilterChipRow } from '@/features/transactions/filter-chip-row';
+import { MonthPicker } from '@/features/transactions/month-picker';
 import { SearchBox } from '@/features/transactions/search-box';
 import { LoadMore } from '@/features/transactions/load-more';
 import { ExportButton } from '@/features/export/export-button';
 import { exportTransactionsCSV } from '@/features/export/actions';
+import { SkeletonList, SkeletonStat } from '@/components/ui/skeleton-presets';
 import { formatCurrency } from '@/lib/format';
 import { buildLocalizedHref, getLocale } from '@/lib/i18n/locale-path';
 import * as m from '@/paraglide/messages';
@@ -49,31 +56,21 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
   const sp = await searchParams;
   const month = sp.month && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : currentMonth();
 
+  // Các fetch không phụ thuộc month (accounts / categories / atm / bank) chạy song
+  // song ở parent để header form không cần vào Suspense — vẫn render ngay frame đầu.
+  // Chỉ phụ thuộc month (summary + txn list) mới đẩy vào TransactionsMonthView.
+  const [accounts, categories, atmCategories, bankOptions] = await Promise.all([
+    listActiveAccounts(),
+    listCategoriesForSelect(),
+    listAtmFeeCategories(),
+    listWithdrawalBankOptions(),
+  ]);
+
   const typeFilter: Transaction['type'] | undefined = TYPE_VALUES.find(
     (t) => t === sp.type,
   );
   const qFilter = (sp.q ?? '').trim().slice(0, 80); // giới hạn 80 chars tránh query quá dài
   const before = sp.before && /^\d{4}-\d{2}-\d{2}$/.test(sp.before) ? sp.before : undefined;
-
-  // Parallel fetch: summary (luôn lấy theo month) + accounts + categories + transactions (filter)
-  const [summary, accounts, categories, txnResult, atmCategories, bankOptions] = await Promise.all([
-    getMonthSummary(month),
-    listActiveAccounts(),
-    listCategoriesForSelect(),
-    listTransactions({
-      month,
-      type: typeFilter,
-      q: qFilter,
-      before,
-      limit: PAGE_SIZE,
-    }),
-    listAtmFeeCategories(),
-    listWithdrawalBankOptions(),
-  ]);
-
-  // Cursor cho load-more: occurred_at của row cuối cùng (cũ nhất trong trang hiện tại)
-  const lastRow = txnResult.rows.at(-1);
-  const nextBefore = lastRow?.occurred_at.slice(0, 10);
 
   return (
     <div className="space-y-6 px-4 py-6 md:px-6 md:py-8 lg:mx-auto lg:max-w-6xl">
@@ -109,6 +106,76 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
         </div>
       </div>
 
+      {/* MonthPicker: client wrapper toggle giữa loading skeleton và RSC content
+          dựa trên useTransition.pending — skeleton hiện NGAY khi bấm prev/next. */}
+      <MonthPicker
+        month={month}
+        loading={
+          <div className="space-y-6" aria-busy="true">
+            <div className="space-y-3">
+              <SkeletonStat />
+            </div>
+            <div className="h-12 w-full border-2 border-border bg-muted" />
+            <SkeletonList items={6} />
+          </div>
+        }
+      >
+        <TransactionsMonthView
+          month={month}
+          typeFilter={typeFilter}
+          qFilter={qFilter}
+          before={before}
+        />
+      </MonthPicker>
+
+      {accounts.length === 0 ? (
+        <p className="mt-2 text-center text-xs text-muted-foreground">
+          {m.dashboard_create_account_link()}{' '}
+          <Link href={buildLocalizedHref("/accounts", getLocale())} className="font-bold text-foreground underline decoration-2 underline-offset-2">
+            {m.accounts_create_btn()} →
+          </Link>
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+interface TransactionsMonthViewProps {
+  month: string;
+  typeFilter: Transaction['type'] | undefined;
+  qFilter: string;
+  before: string | undefined;
+}
+
+/** Phần nội dung phụ thuộc tháng — fetch summary + list song song, render UI.
+ * Tách riêng để khi URL ?month=YYYY-MM đổi, React Suspense ở parent show skeleton
+ * (SkeletonStat + SkeletonList) thay vì hiển thị data tháng cũ trong khi RSC mới
+ * đang fetch. */
+async function TransactionsMonthView({
+  month,
+  typeFilter,
+  qFilter,
+  before,
+}: TransactionsMonthViewProps) {
+  const [summary, accounts, categories, txnResult] = await Promise.all([
+    getMonthSummary(month),
+    listActiveAccounts(),
+    listCategoriesForSelect(),
+    listTransactions({
+      month,
+      type: typeFilter,
+      q: qFilter,
+      before,
+      limit: PAGE_SIZE,
+    }),
+  ]);
+
+  // Cursor cho load-more: occurred_at của row cuối cùng (cũ nhất trong trang hiện tại)
+  const lastRow = txnResult.rows.at(-1);
+  const nextBefore = lastRow?.occurred_at.slice(0, 10);
+
+  return (
+    <>
       {/* Summary chips theo currency (luôn cả tháng, không filter type).
           Mobile: mỗi SummaryCard full-width — padding đều 2 bên, chip dài ra.
           PC: 3 cards ngang compact, width cap bằng `lg:w-fit lg:min-w-[28rem]`
@@ -160,15 +227,6 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
         </p>
       ) : null}
 
-      {accounts.length === 0 ? (
-        <p className="mt-2 text-center text-xs text-muted-foreground">
-          {m.dashboard_create_account_link()}{' '}
-          <Link href={buildLocalizedHref("/accounts", getLocale())} className="font-bold text-foreground underline decoration-2 underline-offset-2">
-            {m.accounts_create_btn()} →
-          </Link>
-        </p>
-      ) : null}
-
       {/* Load more — chỉ hiện khi không filter (filter thì cursor chưa support) */}
       {!typeFilter && !qFilter && txnResult.hasMore && nextBefore ? (
         <LoadMore before={nextBefore} month={month} />
@@ -179,7 +237,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
           {m.dashboard_txn_count_month({ count: txnResult.rows.length })}
         </p>
       ) : null}
-    </div>
+    </>
   );
 }
 
